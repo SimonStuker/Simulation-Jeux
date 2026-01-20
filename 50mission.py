@@ -32,12 +32,98 @@ def meta_valeurs(valeurs_autorisees):
         return all(cartes.valeurcarte in valeurs_autorisees)
     return fx_contrainte
 
-#Je tente : nombre de cartes d'une couleur
+#Couleurs sur la table
+def couleurs_sur_table(etatjeu):
+    L=[]
+    for x in etatjeu("Cartes sur table"):
+        L.append(x.couleurcarte)
+    return L
+
+#Valeurs sur la table
+def valeurs_sur_table(etatjeu):
+    L=[]
+    for x in etatjeu("Cartes sur table"):
+        L.append(x.valeurcarte)
+    return L
+
+#Je tente : nombre d'une couleur sur la table
 def meta_nombre_couleur(couleur,nombre):
     def fx_contrainte(cartes):
-        return cartes.couleurcartecarte(couleur)==nombre   ##PAS CERTAIN DU TOUT
+        return valeurs_sur_table(etat_jeu).count(couleur)==nombre
     return fx_contrainte
-        
+
+
+#Je tente : nombre d'une valeur sur la table
+def meta_nombre_valeur(valeur,nombre):
+    def fx_contrainte(cartes):
+        return nombres_sur_table(etat_jeu).count(valeur)==nombre
+    return fx_contrainte
+
+
+#Je tente : 2 cartes d'une couleur, adjacentes
+def meta_2_couleur_adjacente(couleur):
+    def fx_contrainte(cartes):
+        global etat_jeu
+        L=couleurs_sur_table(etat_jeu)
+        M=[k for k in L and L(k)==couleur]
+        return meta_nombre_couleur(couleur,2) and np.abs(M[1]-M[2])==1
+    return fx_contrainte
+
+#Je tente : 2 cartes d'une couleur, espacées d'une carte exactement
+def meta_2_couleur_espace_de_un(couleur):
+    def fx_contrainte(cartes):
+        L=couleurs_sur_table(etat_jeu)
+        M=[k for k in L and L(k)==couleur]
+        return meta_nombre_couleur(couleur,2) and np.abs(M[1]-M[2])==2
+    return fx_contrainte
+
+#Je tente : 2 cartes d'une valeur, espacées d'une carte exactement
+def meta_2_valeurs_espace_de_un(valeur):
+    def fx_contrainte(cartes):
+        L=valeurs_sur_table(etat_jeu)
+        M=[k for k in L and L(k)==valeur]
+        return meta_nombre_valeur(valeur,2) and np.abs(M[1]-M[2])==2
+    return fx_contrainte
+
+#Je tente : 2 cartes d'une couleur, espacées d'au moins une carte
+def meta_2_couleur_non_adjacente(couleur):
+    def fx_contrainte(cartes):
+        L=couleurs_sur_table(etat_jeu)
+        M=[k for k in L and L(k)==couleur]
+        return meta_nombre_couleur(couleur,2) and np.abs(M[1]-M[2])>2
+    return fx_contrainte
+
+#Je tente : les 4 cartes se suivent
+def meta_4_valeurs_se_suivent():
+    def fx_contrainte(cartes):
+        L=valeurs_sur_table(etat_jeu)
+        return  {1,2,3,4} <= set(L) or {2,3,4,5} <= set(L) or {3,4,5,6} <= set(L) or {4,5,6,7} <= set(L)
+    return fx_contrainte
+
+#Je tente : 3 cartes se suivent dans l'ordre
+def meta_3_valeurs_se_suivent_dans_lordre():
+    def fx_contrainte(cartes):
+        L=valeurs_sur_table(etat_jeu)
+        return  L[1]==L[2]+1==L[3]+2 or L[1]==L[2]-1==L[3]-2 or L[2]==L[3]+1==L[4]+2 or L[2]==L[3]-1==L[4]-2 
+    return fx_contrainte
+
+#Je tente : deux couleurs ont la même somme de valeurs
+def somme_couleurs_egale(couleur1,couleur2):
+    def fx_contrainte(cartes):
+        L=valeurs_sur_table(etat_jeu)
+        M=couleurs_sur_table(etat_jeu)
+        return sum(M[x] for x in range(0,4) if L[x]==couleur1)==sum(M[x] for x in range(0,4) if L[x]==couleur2)
+    return fx_contrainte
+
+#Je tente : une couleur1 a 2* la somme des valeurs d'une autre couleur2
+def somme_couleurs_double(couleur1,couleur2):
+    def fx_contrainte(cartes):
+        L=valeurs_sur_table(etat_jeu)
+        M=couleurs_sur_table(etat_jeu)
+        return sum(M[x] for x in range(0,4) if L[x]==couleur1)==sum(M[x] for x in range(0,4) if L[x]==couleur2)
+    return fx_contrainte
+
+
 
 # Création du paquet de missions
 Pioche_missions=np.zeros(50)
@@ -72,38 +158,38 @@ Pioche_missions[21]=Mission(nom="Trois_Bleues", contrainte= meta_nombre_couleur(
 Pioche_missions[22]=Mission(nom="Trois_Rouges", contrainte= meta_nombre_couleur('rouge',3))
 Pioche_missions[23]=Mission(nom="Trois_Jaunes", contrainte= meta_nombre_couleur('jaune',3))
 
-Pioche_missions[24]=Mission("Deux_Vertes_adjacentes")
-Pioche_missions[25]=Mission("Deux_Rouges_adjacentes")
-Pioche_missions[26]=Mission("Deux_Jaunes_adjacentes")
-Pioche_missions[27]=Mission("Deux_Bleues_adjacentes")
+Pioche_missions[24]=Mission(nom="Deux_Vertes_adjacentes", contrainte= meta_2_couleur_adjacente('vert'))
+Pioche_missions[25]=Mission(nom="Deux_Rouges_adjacentes", contrainte= meta_2_couleur_adjacente('rouge'))
+Pioche_missions[26]=Mission(nom="Deux_Jaunes_adjacentes", contrainte= meta_2_couleur_adjacente('jaune'))
+Pioche_missions[27]=Mission(nom="Deux_Bleues_adjacentes", contrainte= meta_2_couleur_adjacente('bleu'))
 
-Pioche_missions[28]=Mission("Deux_Vertes_espacees")
-Pioche_missions[29]=Mission("Deux_Rouges_espacees")
-Pioche_missions[30]=Mission("Deux_Jaunes_espacees")
-Pioche_missions[31]=Mission("Deux_Bleues_espacees")
+Pioche_missions[28]=Mission(nom="Deux_Vertes_espacees", contrainte= meta_2_couleur_non_adjacente('vert'))
+Pioche_missions[29]=Mission(nom="Deux_Rouges_espacees", contrainte= meta_2_couleur_non_adjacente('rouge'))
+Pioche_missions[30]=Mission(nom="Deux_Jaunes_espacees", contrainte= meta_2_couleur_non_adjacente('jaune'))
+Pioche_missions[31]=Mission(nom="Deux_Bleues_espacees", contrainte= meta_2_couleur_non_adjacente('bleu'))
 
-Pioche_missions[32]=Mission("Deux_Vertes_espacees_de_1")
-Pioche_missions[33]=Mission("Deux_Rouges_espacees_de_1")
-Pioche_missions[34]=Mission("Deux_Jaunes_espacees_de_1")
-Pioche_missions[35]=Mission("Deux_Bleues_espacees_de_1")
-Pioche_missions[36]=Mission("Deux_Impaires_espacees_de_1")
+Pioche_missions[32]=Mission(nom="Deux_Vertes_espacees_de_1", contrainte= meta_2_couleur_espace_de_un('vert'))
+Pioche_missions[33]=Mission(nom="Deux_Rouges_espacees_de_1", contrainte= meta_2_couleur_espace_de_un('rouge'))
+Pioche_missions[34]=Mission(nom="Deux_Jaunes_espacees_de_1", contrainte= meta_2_couleur_espace_de_un('jaune'))
+Pioche_missions[35]=Mission(nom="Deux_Bleues_espacees_de_1", contrainte= meta_2_couleur_espace_de_un('bleu'))
+Pioche_missions[36]=Mission(nom="Deux_Impaires_espacees_de_1", contrainte= meta_2_valeurs_espace_de_un([1,3,5,7]))
 
-Pioche_missions[37]=Mission("Valeurs_Distinctes")
-Pioche_missions[38]=Mission("Couleurs_Distinctes")
-Pioche_missions[39]=Mission("Valeurs_et_Couleurs_Distinctes")
+Pioche_missions[37]=Mission(nom="Valeurs_Distinctes", contrainte=len(set(valeurs_sur_table(etat_jeu))) ==4 )
+Pioche_missions[38]=Mission(nom="Couleurs_Distinctes", contrainte=len(set(couleurs_sur_table(etat_jeu))) ==4 )
+Pioche_missions[39]=Mission(nom="Valeurs_et_Couleurs_Distinctes", contrainte=(len(set(couleurs_sur_table(etat_jeu)))==4 and len(set(valeurs_sur_table(etat_jeu))) ==4))
 
-Pioche_missions[40]=Mission("3_se_suivant_dans_lordre")
-Pioche_missions[41]=Mission("4_se_suivent")
+Pioche_missions[40]=Mission(nom="3_se_suivant_dans_lordre",contrainte=meta_3_valeurs_se_suivent_dans_lordre() )
+Pioche_missions[41]=Mission(nom="4_se_suivent",contrainte=meta_4_valeurs_se_suivent())
 
-Pioche_missions[42]=Mission("Somme_Jaune==Somme_Verte")
-Pioche_missions[43]=Mission("Somme_Jaune==Somme_Rouge")
-Pioche_missions[44]=Mission("Somme_Bleue==Somme_Verte")
-Pioche_missions[45]=Mission("Somme_Bleue==Somme_Rouge")
+Pioche_missions[42]=Mission(nom="Somme_Jaune==Somme_Verte",contrainte=somme_couleurs_egale("jaune","vert"))
+Pioche_missions[43]=Mission(nom="Somme_Jaune==Somme_Rouge",contrainte=somme_couleurs_egale("jaune","rouge"))
+Pioche_missions[44]=Mission(nom="Somme_Bleue==Somme_Verte",contrainte=somme_couleurs_egale("bleu","vert"))
+Pioche_missions[45]=Mission(nom="Somme_Bleue==Somme_Rouge",contrainte=somme_couleurs_egale("bleu","rouge"))
 
-Pioche_missions[46]=Mission("Somme_Jaune==2*Somme_Verte")
-Pioche_missions[47]=Mission("2*Somme_Jaune==Somme_Rouge")
-Pioche_missions[48]=Mission("2*Somme_Bleue==Somme_Verte")
-Pioche_missions[49]=Mission("Somme_Bleue==2*Somme_Rouge")
+Pioche_missions[46]=Mission(nom="2*Somme_Verte==Somme_Jaune",contrainte=somme_couleurs_double("jaune","vert"))
+Pioche_missions[47]=Mission(nom="2*Somme_Jaune==Somme_Rouge",contrainte=somme_couleurs_double("rouge","jaune"))
+Pioche_missions[48]=Mission(nom="2*Somme_Bleue==Somme_Verte",contrainte=somme_couleurs_double("vers","bleu"))
+Pioche_missions[49]=Mission(nom="2*Somme_Rouge==Somme_Bleue",contrainte=somme_couleurs_double("bleu","rouge"))
         
 # Création des cartes de jeu
 class Carte:
@@ -220,6 +306,7 @@ if __name__ == "__main__":
     main()
     
     
+
 
 
 
