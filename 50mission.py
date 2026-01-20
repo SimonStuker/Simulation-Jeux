@@ -56,7 +56,7 @@ def meta_nombre_couleur(couleur,nombre):
 #Je tente : nombre d'une valeur sur la table
 def meta_nombre_valeur(valeur,nombre):
     def fx_contrainte(cartes):
-        return nombres_sur_table(etat_jeu).count(valeur)==nombre
+        return valeurs_sur_table(etat_jeu).count(valeur)==nombre
     return fx_contrainte
 
 
@@ -65,7 +65,7 @@ def meta_2_couleur_adjacente(couleur):
     def fx_contrainte(cartes):
         global etat_jeu
         L=couleurs_sur_table(etat_jeu)
-        M=[k for k in L and L(k)==couleur]
+        M=[k for k in L if L(k)==couleur]
         return meta_nombre_couleur(couleur,2) and np.abs(M[1]-M[2])==1
     return fx_contrainte
 
@@ -73,7 +73,7 @@ def meta_2_couleur_adjacente(couleur):
 def meta_2_couleur_espace_de_un(couleur):
     def fx_contrainte(cartes):
         L=couleurs_sur_table(etat_jeu)
-        M=[k for k in L and L(k)==couleur]
+        M=[k for k in L if L(k)==couleur]
         return meta_nombre_couleur(couleur,2) and np.abs(M[1]-M[2])==2
     return fx_contrainte
 
@@ -81,7 +81,7 @@ def meta_2_couleur_espace_de_un(couleur):
 def meta_2_valeurs_espace_de_un(valeur):
     def fx_contrainte(cartes):
         L=valeurs_sur_table(etat_jeu)
-        M=[k for k in L and L(k)==valeur]
+        M=[k for k in L if L(k)==valeur]
         return meta_nombre_valeur(valeur,2) and np.abs(M[1]-M[2])==2
     return fx_contrainte
 
@@ -89,7 +89,7 @@ def meta_2_valeurs_espace_de_un(valeur):
 def meta_2_couleur_non_adjacente(couleur):
     def fx_contrainte(cartes):
         L=couleurs_sur_table(etat_jeu)
-        M=[k for k in L and L(k)==couleur]
+        M=[k for k in L if L(k)==couleur]
         return meta_nombre_couleur(couleur,2) and np.abs(M[1]-M[2])>2
     return fx_contrainte
 
@@ -306,6 +306,7 @@ if __name__ == "__main__":
     main()
     
     
+
 
 
 
