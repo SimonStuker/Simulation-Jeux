@@ -6,7 +6,7 @@
 # Librairies et variables globales
 import random
 import numpy as np
-global Pioche_cartes, Pioche_missions, joueur_actuel
+global Pioche_cartes, Pioche_missions, joueur_actuel, etat_jeu
 
 # Création des missions
 class Mission:
@@ -212,6 +212,7 @@ Pioche_cartes=Pioche_cartes+Pioche_cartes
 
 # Mise en place
 def initialiser_jeu():
+    global Pioche_cartes, Pioche_missions
     Pioche_missions=random.shuffle(Pioche_missions)
     Pioche_cartes=random.shuffle(Pioche_cartes)
     etat_jeu = {
@@ -241,6 +242,7 @@ def jouer_un_tour(etat_jeu):
     
 # Coups possibles du joueur
 def coups_possibles(joueur,etat_jeu):
+    global joueur_actuel
     CP=[]
     for x in etat_jeu[joueur_actuel]:
         for y in etat_jeu("Missions sur table"):
@@ -306,8 +308,6 @@ if __name__ == "__main__":
     main()
     
     
-
-
 
 
 
