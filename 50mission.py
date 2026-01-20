@@ -215,9 +215,10 @@ Pioche_cartes=Pioche_cartes+Pioche_cartes
 
 # Mise en place
 def initialiser_jeu():
-    global Pioche_cartes, Pioche_missions
-    Pioche_missions=random.shuffle(Pioche_missions)
-    Pioche_cartes=random.shuffle(Pioche_cartes)
+    global Pioche_cartes, Pioche_missions, etat_jeu
+    #LE MELANGE NE FONCTIONNE PAS
+    # Pioche_missions=random.shuffle(Pioche_missions)
+    # Pioche_cartes=random.shuffle(Pioche_cartes)
     etat_jeu = {
         "Main joueur 1" : Pioche_cartes[0:4],
         "Main joueur 2" : Pioche_cartes[4:9],
@@ -237,6 +238,7 @@ def jouer_partie(etat_jeu):
         
 # Tour de jeu
 def jouer_un_tour(etat_jeu):
+    global joueur_actuel
     joueur_actuel = 1+etat_jeu["tour"]%2
     action = choisir_action(joueur_actuel, etat_jeu)
     appliquer_action(action, joueur_actuel, etat_jeu)
@@ -247,11 +249,18 @@ def jouer_un_tour(etat_jeu):
 def coups_possibles(joueur,etat_jeu):
     global joueur_actuel
     CP=[]
-    for x in etat_jeu[joueur_actuel]:
-        for y in etat_jeu("Missions sur table"):
-            if x.valeurcarte==y.valeurcarte or x.couleur==y.couleur:
-                CP.append([x,y])
+    if joueur_actuel==1:
+        for x in etat_jeu["Main joueur 1"]:
+            for y in etat_jeu["Cartes sur table"]:
+                if x.valeurcarte==y.valeurcarte or x.couleurcarte==y.couleurcarte:
+                    CP.append([x,y])
+    if joueur_actuel==2:
+        for x in etat_jeu["Main joueur 2"]:
+            for y in etat_jeu("Cartes sur table"):
+                if x.valeurcarte==y.couleurcarte or x.couleur==y.couleurcarte:
+                    CP.append([x,y])
     return CP
+
     
 # Choix d'une action
 def choisir_action(joueur, etat_jeu):
@@ -261,14 +270,19 @@ def choisir_action(joueur, etat_jeu):
 
 # Résultat de l'action
 def appliquer_action(action, joueur, etat_jeu):
-    action =  choisir_action(joueur, etat_jeu)
-    action[1]=action[2]                        #Changer la carte sur la table
+    action =  choisir_action(joueur, etat_jeu)  # Action = couple [carte main joueur , carte sur table] jouable
+    
+    
+    # CETTE PARTIE EST FOIREUSE, IL FAUT LA RECTIFIER
+
+    action[0]=action[1]                        #Changer la carte sur la table
+    
     if joueur_actuel == 1:  #refaire la main du joueur
-        etat_jeu["Main joueur 1"].remove(action[1]) #Enlever la carte de la main du joueur
+        etat_jeu["Main joueur 1"].remove(action[0]) #Enlever la carte de la main du joueur
         etat_jeu["Main joueur 1"].append(etat_jeu["pioche de cartes"][0]) #Ajouter la 1e carte de la pioche à la main du joueur
         etat_jeu["pioche de cartes"].remove(etat_jeu["pioche de cartes"][0]) #Enlever la 1e carte de la pioche
     if joueur_actuel == 2:  #refaire la main du joueur
-        etat_jeu["Main joueur 2"].remove(action[1])
+        etat_jeu["Main joueur 2"].remove(action[0])
         etat_jeu["Main joueur 2"].append(etat_jeu["pioche de cartes"][0])
         etat_jeu["pioche de cartes"].remove(etat_jeu["pioche de cartes"][0])
         
@@ -304,6 +318,8 @@ def afficher_resultats(etat_jeu):
 
 def main():
     initialiser_jeu()
+    print("DEBUG")
+    print(etat_jeu["Main joueur 1"])
     jouer_partie(etat_jeu)
     afficher_resultats(etat_jeu)
 
