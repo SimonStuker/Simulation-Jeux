@@ -10,8 +10,9 @@ global Pioche_cartes, Pioche_missions, joueur_actuel, etat_jeu
 
 # Création des missions
 class Mission:
+    nom=""
     contrainte=""
-    def __init__(self, contrainte):
+    def __init__(self, nom,contrainte):
         self.contrainte=  contrainte
         
 # QUINTEN-STYLE :" c'est une meta-fonction, c'est une fonction qui donne une fonction N^(N^N) en maths a peu pres"
@@ -126,70 +127,71 @@ def somme_couleurs_double(couleur1,couleur2):
 
 
 # Création du paquet de missions
-Pioche_missions=np.zeros(50)
+Pioche_missions=[]
 # QUINTEN : "voila comment tu ferais "a l'arrache""
-Pioche_missions[0]=Mission(nom="Somme=10", contrainte=lambda cartes: sum(x.valeurcarte for x in cartes)==10)
-Pioche_missions[1]=Mission(nom="Somme=15", contrainte=lambda cartes: sum(x.valeurcarte for x in cartes)==15)
-Pioche_missions[2]=Mission(nom="Somme=18", contrainte=lambda cartes: sum(x.valeurcarte for x in cartes)==18)
-Pioche_missions[3]=Mission(nom="Somme=20", contrainte=lambda cartes: sum(x.valeurcarte for x in cartes)==20)
+Pioche_missions.append(Mission(nom="Somme=10", contrainte=lambda cartes: sum(x.valeurcarte for x in cartes)==10))
+Pioche_missions.append(Mission(nom="Somme=15", contrainte=lambda cartes: sum(x.valeurcarte for x in cartes)==15))
+Pioche_missions.append(Mission(nom="Somme=18", contrainte=lambda cartes: sum(x.valeurcarte for x in cartes)==18))
+Pioche_missions.append(Mission(nom="Somme=20", contrainte=lambda cartes: sum(x.valeurcarte for x in cartes)==20))
 
 # QUINTEN : "voila comment tu ferais avec des "meta fonctions", plus propre"
-Pioche_missions[4]=Mission(nom="R ou B", contrainte=meta_couleurs(['rouge','bleu']))
-Pioche_missions[5]=Mission(nom="J ou B", contrainte=meta_couleurs(['jaune','bleu']))
-Pioche_missions[6]=Mission(nom="R ou V", contrainte=meta_couleurs(['rouge','vert']))
-Pioche_missions[7]=Mission(nom="J ou V", contrainte=meta_couleurs(['jaune','vert']))
+Pioche_missions.append(Mission(nom="R ou B", contrainte=meta_couleurs(['rouge','bleu'])))
+Pioche_missions.append(Mission(nom="J ou B", contrainte=meta_couleurs(['jaune','bleu'])))
+Pioche_missions.append(Mission(nom="R ou V", contrainte=meta_couleurs(['rouge','vert'])))
+Pioche_missions.append(Mission(nom="J ou V", contrainte=meta_couleurs(['jaune','vert'])))
 
-Pioche_missions[8]=Mission(nom="Somme_Rouge==4",contrainte=meta_somme_couleur('rouge',4))
-Pioche_missions[9]=Mission(nom="Somme_Rouge==10",contrainte=meta_somme_couleur('rouge',10))
-Pioche_missions[10]=Mission(nom="Somme_Jaune==2",contrainte=meta_somme_couleur('jaune',2))
-Pioche_missions[11]=Mission(nom="Somme_Jaune==11",contrainte=meta_somme_couleur('jaune',11))
-Pioche_missions[12]=Mission(nom="Somme_Bleue==3",contrainte=meta_somme_couleur('bleu',3))
-Pioche_missions[13]=Mission(nom="Somme_Bleue==9",contrainte=meta_somme_couleur('bleu',9))
-Pioche_missions[14]=Mission(nom="Somme_Verte==6",contrainte=meta_somme_couleur('vert',6))
-Pioche_missions[15]=Mission(nom="Somme_Verte==7",contrainte=meta_somme_couleur('vert',7))
+Pioche_missions.append(Mission(nom="Somme_Rouge==4",contrainte=meta_somme_couleur('rouge',4)))
+Pioche_missions.append(Mission(nom="Somme_Rouge==10",contrainte=meta_somme_couleur('rouge',10)))
+Pioche_missions.append(Mission(nom="Somme_Jaune==2",contrainte=meta_somme_couleur('jaune',2)))
+Pioche_missions.append(Mission(nom="Somme_Jaune==11",contrainte=meta_somme_couleur('jaune',11)))
+Pioche_missions.append(Mission(nom="Somme_Bleue==3",contrainte=meta_somme_couleur('bleu',3)))
+Pioche_missions.append(Mission(nom="Somme_Bleue==9",contrainte=meta_somme_couleur('bleu',9)))
+Pioche_missions.append(Mission(nom="Somme_Verte==6",contrainte=meta_somme_couleur('vert',6)))
+Pioche_missions.append(Mission(nom="Somme_Verte==7",contrainte=meta_somme_couleur('vert',7)))
 
-Pioche_missions[16]=Mission(nom="Tout_impair", contrainte=meta_couleurs([1,3,5,7]))
-Pioche_missions[17]=Mission(nom="Tout_pair", contrainte=meta_couleurs([2,4,6]))
-Pioche_missions[18]=Mission(nom="Tout>=5", contrainte=meta_couleurs([5,6,7]))
-Pioche_missions[19]=Mission(nom="Tout<=3", contrainte=meta_couleurs([1,2,3]))
+Pioche_missions.append(Mission(nom="Tout_impair", contrainte=meta_couleurs([1,3,5,7])))
+Pioche_missions.append(Mission(nom="Tout_pair", contrainte=meta_couleurs([2,4,6])))
+Pioche_missions.append(Mission(nom="Tout>=5", contrainte=meta_couleurs([5,6,7])))
+Pioche_missions.append(Mission(nom="Tout<=3", contrainte=meta_couleurs([1,2,3])))
 
-Pioche_missions[20]=Mission(nom="Trois_Vertes", contrainte= meta_nombre_couleur('vert',3))
-Pioche_missions[21]=Mission(nom="Trois_Bleues", contrainte= meta_nombre_couleur('bleu',3))
-Pioche_missions[22]=Mission(nom="Trois_Rouges", contrainte= meta_nombre_couleur('rouge',3))
-Pioche_missions[23]=Mission(nom="Trois_Jaunes", contrainte= meta_nombre_couleur('jaune',3))
+Pioche_missions.append(Mission(nom="Trois_Vertes", contrainte= meta_nombre_couleur('vert',3)))
+Pioche_missions.append(Mission(nom="Trois_Bleues", contrainte= meta_nombre_couleur('bleu',3)))
+Pioche_missions.append(Mission(nom="Trois_Rouges", contrainte= meta_nombre_couleur('rouge',3)))
+Pioche_missions.append(Mission(nom="Trois_Jaunes", contrainte= meta_nombre_couleur('jaune',3)))
 
-Pioche_missions[24]=Mission(nom="Deux_Vertes_adjacentes", contrainte= meta_2_couleur_adjacente('vert'))
-Pioche_missions[25]=Mission(nom="Deux_Rouges_adjacentes", contrainte= meta_2_couleur_adjacente('rouge'))
-Pioche_missions[26]=Mission(nom="Deux_Jaunes_adjacentes", contrainte= meta_2_couleur_adjacente('jaune'))
-Pioche_missions[27]=Mission(nom="Deux_Bleues_adjacentes", contrainte= meta_2_couleur_adjacente('bleu'))
+Pioche_missions.append(Mission(nom="Deux_Vertes_adjacentes", contrainte= meta_2_couleur_adjacente('vert')))
+Pioche_missions.append(Mission(nom="Deux_Rouges_adjacentes", contrainte= meta_2_couleur_adjacente('rouge')))
+Pioche_missions.append(Mission(nom="Deux_Jaunes_adjacentes", contrainte= meta_2_couleur_adjacente('jaune')))
+Pioche_missions.append(Mission(nom="Deux_Bleues_adjacentes", contrainte= meta_2_couleur_adjacente('bleu')))
 
-Pioche_missions[28]=Mission(nom="Deux_Vertes_espacees", contrainte= meta_2_couleur_non_adjacente('vert'))
-Pioche_missions[29]=Mission(nom="Deux_Rouges_espacees", contrainte= meta_2_couleur_non_adjacente('rouge'))
-Pioche_missions[30]=Mission(nom="Deux_Jaunes_espacees", contrainte= meta_2_couleur_non_adjacente('jaune'))
-Pioche_missions[31]=Mission(nom="Deux_Bleues_espacees", contrainte= meta_2_couleur_non_adjacente('bleu'))
+Pioche_missions.append(Mission(nom="Deux_Vertes_espacees", contrainte= meta_2_couleur_non_adjacente('vert')))
+Pioche_missions.append(Mission(nom="Deux_Rouges_espacees", contrainte= meta_2_couleur_non_adjacente('rouge')))
+Pioche_missions.append(Mission(nom="Deux_Jaunes_espacees", contrainte= meta_2_couleur_non_adjacente('jaune')))
+Pioche_missions.append(Mission(nom="Deux_Bleues_espacees", contrainte= meta_2_couleur_non_adjacente('bleu')))
 
-Pioche_missions[32]=Mission(nom="Deux_Vertes_espacees_de_1", contrainte= meta_2_couleur_espace_de_un('vert'))
-Pioche_missions[33]=Mission(nom="Deux_Rouges_espacees_de_1", contrainte= meta_2_couleur_espace_de_un('rouge'))
-Pioche_missions[34]=Mission(nom="Deux_Jaunes_espacees_de_1", contrainte= meta_2_couleur_espace_de_un('jaune'))
-Pioche_missions[35]=Mission(nom="Deux_Bleues_espacees_de_1", contrainte= meta_2_couleur_espace_de_un('bleu'))
-Pioche_missions[36]=Mission(nom="Deux_Impaires_espacees_de_1", contrainte= meta_2_valeurs_espace_de_un([1,3,5,7]))
+Pioche_missions.append(Mission(nom="Deux_Vertes_espacees_de_1", contrainte= meta_2_couleur_espace_de_un('vert')))
+Pioche_missions.append(Mission(nom="Deux_Rouges_espacees_de_1", contrainte= meta_2_couleur_espace_de_un('rouge')))
+Pioche_missions.append(Mission(nom="Deux_Jaunes_espacees_de_1", contrainte= meta_2_couleur_espace_de_un('jaune')))
+Pioche_missions.append(Mission(nom="Deux_Bleues_espacees_de_1", contrainte= meta_2_couleur_espace_de_un('bleu')))
+Pioche_missions.append(Mission(nom="Deux_Impaires_espacees_de_1", contrainte= meta_2_valeurs_espace_de_un([1,3,5,7])))
 
-Pioche_missions[37]=Mission(nom="Valeurs_Distinctes", contrainte=len(set(valeurs_sur_table(etat_jeu))) ==4 )
-Pioche_missions[38]=Mission(nom="Couleurs_Distinctes", contrainte=len(set(couleurs_sur_table(etat_jeu))) ==4 )
-Pioche_missions[39]=Mission(nom="Valeurs_et_Couleurs_Distinctes", contrainte=(len(set(couleurs_sur_table(etat_jeu)))==4 and len(set(valeurs_sur_table(etat_jeu))) ==4))
+# CETTE SECTION DYSFONCTIONNE
+# Pioche_missions.append(Mission(nom="Valeurs_Distinctes", contrainte=len(set(valeurs_sur_table(etat_jeu))) ==4 ))
+# Pioche_missions.append(Mission(nom="Couleurs_Distinctes", contrainte=len(set(couleurs_sur_table(etat_jeu))) ==4 ))
+# Pioche_missions.append(Mission(nom="Valeurs_et_Couleurs_Distinctes", contrainte=(len(set(couleurs_sur_table(etat_jeu)))==4 and len(set(valeurs_sur_table(etat_jeu))) ==4)))
 
-Pioche_missions[40]=Mission(nom="3_se_suivant_dans_lordre",contrainte=meta_3_valeurs_se_suivent_dans_lordre() )
-Pioche_missions[41]=Mission(nom="4_se_suivent",contrainte=meta_4_valeurs_se_suivent())
+Pioche_missions.append(Mission(nom="3_se_suivant_dans_lordre",contrainte=meta_3_valeurs_se_suivent_dans_lordre() ))
+Pioche_missions.append(Mission(nom="4_se_suivent",contrainte=meta_4_valeurs_se_suivent()))
 
-Pioche_missions[42]=Mission(nom="Somme_Jaune==Somme_Verte",contrainte=somme_couleurs_egale("jaune","vert"))
-Pioche_missions[43]=Mission(nom="Somme_Jaune==Somme_Rouge",contrainte=somme_couleurs_egale("jaune","rouge"))
-Pioche_missions[44]=Mission(nom="Somme_Bleue==Somme_Verte",contrainte=somme_couleurs_egale("bleu","vert"))
-Pioche_missions[45]=Mission(nom="Somme_Bleue==Somme_Rouge",contrainte=somme_couleurs_egale("bleu","rouge"))
+Pioche_missions.append(Mission(nom="Somme_Jaune==Somme_Verte",contrainte=somme_couleurs_egale("jaune","vert")))
+Pioche_missions.append(Mission(nom="Somme_Jaune==Somme_Rouge",contrainte=somme_couleurs_egale("jaune","rouge")))
+Pioche_missions.append(Mission(nom="Somme_Bleue==Somme_Verte",contrainte=somme_couleurs_egale("bleu","vert")))
+Pioche_missions.append(Mission(nom="Somme_Bleue==Somme_Rouge",contrainte=somme_couleurs_egale("bleu","rouge")))
 
-Pioche_missions[46]=Mission(nom="2*Somme_Verte==Somme_Jaune",contrainte=somme_couleurs_double("jaune","vert"))
-Pioche_missions[47]=Mission(nom="2*Somme_Jaune==Somme_Rouge",contrainte=somme_couleurs_double("rouge","jaune"))
-Pioche_missions[48]=Mission(nom="2*Somme_Bleue==Somme_Verte",contrainte=somme_couleurs_double("vers","bleu"))
-Pioche_missions[49]=Mission(nom="2*Somme_Rouge==Somme_Bleue",contrainte=somme_couleurs_double("bleu","rouge"))
+Pioche_missions.append(Mission(nom="2*Somme_Verte==Somme_Jaune",contrainte=somme_couleurs_double("jaune","vert")))
+Pioche_missions.append(Mission(nom="2*Somme_Jaune==Somme_Rouge",contrainte=somme_couleurs_double("rouge","jaune")))
+Pioche_missions.append(Mission(nom="2*Somme_Bleue==Somme_Verte",contrainte=somme_couleurs_double("vers","bleu")))
+Pioche_missions.append(Mission(nom="2*Somme_Rouge==Somme_Bleue",contrainte=somme_couleurs_double("bleu","rouge")))
         
 # Création des cartes de jeu
 class Carte:
@@ -209,6 +211,7 @@ for i in range(1,8):
     for j in ('rouge','jaune','bleu','vert'):
         Pioche_cartes.append(Carte(i,j))
 Pioche_cartes=Pioche_cartes+Pioche_cartes
+# print("DEBUG",Pioche_cartes[4].valeurcarte,Pioche_cartes[4].couleurcarte)
 
 # Mise en place
 def initialiser_jeu():
@@ -216,12 +219,12 @@ def initialiser_jeu():
     Pioche_missions=random.shuffle(Pioche_missions)
     Pioche_cartes=random.shuffle(Pioche_cartes)
     etat_jeu = {
-        "Main joueur 1" : Pioche_cartes[0,1,2,3],
-        "Main joueur 2" : Pioche_cartes[4,5,6,7],
-        "Cartes sur table" : Pioche_cartes[7,8,9,10],
-        "Missions sur table" :  Pioche_missions[0,1,2,3],
+        "Main joueur 1" : Pioche_cartes[0:4],
+        "Main joueur 2" : Pioche_cartes[4:9],
+        "Cartes sur table" : Pioche_cartes[9:14],
+        "Missions sur table" :  Pioche_missions[0:4],
         "pioche de missions": Pioche_missions[4:],
-        "pioche de cartes": Pioche_cartes[11:],
+        "pioche de cartes": Pioche_cartes[14:],
         "tour": 0,
         "termine": False
     }
@@ -300,7 +303,7 @@ def afficher_resultats(etat_jeu):
 # Boucle principale 
 
 def main():
-    etat_jeu = initialiser_jeu()
+    initialiser_jeu()
     jouer_partie(etat_jeu)
     afficher_resultats(etat_jeu)
 
