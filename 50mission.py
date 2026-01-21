@@ -212,9 +212,8 @@ Pioche_cartes = Pioche_cartes + Pioche_cartes
 # Mise en place
 def initialiser_jeu():
     global Pioche_cartes, Pioche_missions, etat_jeu, joueur_actuel
-    # LE MELANGE NE FONCTIONNE PAS
-    # Pioche_missions=random.shuffle(Pioche_missions)
-    # Pioche_cartes=random.shuffle(Pioche_cartes)
+    random.shuffle(Pioche_missions)
+    random.shuffle(Pioche_cartes)
     # SIMON: je laisse un commentaire sur github pour expliquer le souci subtil
     joueur_actuel = 0
     etat_jeu = {
