@@ -7,6 +7,8 @@
 import random
 import numpy as np
 
+N_CARTES_SUR_TABLE = 4
+
 global Pioche_cartes, Pioche_missions, joueur_actuel, etat_jeu
 
 
@@ -19,107 +21,44 @@ class Mission:
         self.contrainte = contrainte
 
 
-# QUINTEN-STYLE :" c'est une meta-fonction, c'est une fonction qui donne une fonction N^(N^N) en maths a peu pres"
-def meta_couleurs(couleurs_autorisees):
+# SIMON: Les missions comme ca sont pas evidentes a coder, elles meritent d'avoir leur propre meta fonction pour pas perdre en lisibilite
+def meta_2_espacees(fx_condition, D):
+    """
+    Retourne une fonction qui:
+    Verifie si deux cartes a distance D verifient toutes les deux une condition
+    (D=1 signifie adjacentes)
+    """
     def fx_contrainte(cartes):
-        return all(cartes.couleurcarte in couleurs_autorisees)
+        # SIMON: astuce ici je fais "zip" avec un decalage de D donc quand carte1 sera en N, carte 2 sera en N+D
+        for carte1, carte2 in zip(cartes, cartes[D:]):
+            if fx_condition(carte1) and fx_condition(carte2):
+                return True
+        return False
 
     return fx_contrainte
 
 
-# Je tente : somme d'une couleur donnée
-def meta_somme_couleur(couleur, R):
+def meta_2_non_adjacents(fx_condition):
+    """
+    Retourne une fonction qui:
+    Verifie si deux cartes a distance >1 verifient toutes les deux une condition
+    """
     def fx_contrainte(cartes):
-        return sum([x.valeurcarte for x in cartes]) == R
+        # SIMON: astuce on teste meta_2_espacees pour tout D!=1. ie D=2,3,...,N_CARTES_SUR_TABLE
+        for D in range(2,N_CARTES_SUR_TABLE):
+            # un peu complique: meta retourne une fonction, qu'il faut ensuite appeler sur les cartes sur table
+            fx_test_distance_fixe = meta_2_espacees(fx_condition, D)
+            if fx_test_distance_fixe(cartes):
+                return True
+        return False
 
     return fx_contrainte
 
-
-# Je tente : tous les chiffres dans un ensemble
-def meta_valeurs(valeurs_autorisees):
-    def fx_contrainte(cartes):
-        return all(cartes.valeurcarte in valeurs_autorisees)
-
-    return fx_contrainte
-
-
-# Couleurs sur la table
-def couleurs_sur_table(etatjeu):
-    L = []
-    for x in etatjeu("Cartes sur table"):
-        L.append(x.couleurcarte)
-    return L
-
-
-# Valeurs sur la table
-def valeurs_sur_table(etatjeu):
-    L = []
-    for x in etatjeu("Cartes sur table"):
-        L.append(x.valeurcarte)
-    return L
-
-
-# Je tente : nombre d'une couleur sur la table
-def meta_nombre_couleur(couleur, nombre):
-    def fx_contrainte(cartes):
-        return valeurs_sur_table(etat_jeu).count(couleur) == nombre
-
-    return fx_contrainte
-
-
-# Je tente : nombre d'une valeur sur la table
-def meta_nombre_valeur(valeur, nombre):
-    def fx_contrainte(cartes):
-        return valeurs_sur_table(etat_jeu).count(valeur) == nombre
-
-    return fx_contrainte
-
-
-# Je tente : 2 cartes d'une couleur, adjacentes
-def meta_2_couleur_adjacente(couleur):
-    def fx_contrainte(cartes):
-        global etat_jeu
-        L = couleurs_sur_table(etat_jeu)
-        M = [k for k in L if L(k) == couleur]
-        return meta_nombre_couleur(couleur, 2) and np.abs(M[1] - M[2]) == 1
-
-    return fx_contrainte
-
-
-# Je tente : 2 cartes d'une couleur, espacées d'une carte exactement
-def meta_2_couleur_espace_de_un(couleur):
-    def fx_contrainte(cartes):
-        L = couleurs_sur_table(etat_jeu)
-        M = [k for k in L if L(k) == couleur]
-        return meta_nombre_couleur(couleur, 2) and np.abs(M[1] - M[2]) == 2
-
-    return fx_contrainte
-
-
-# Je tente : 2 cartes d'une valeur, espacées d'une carte exactement
-def meta_2_valeurs_espace_de_un(valeur):
-    def fx_contrainte(cartes):
-        L = valeurs_sur_table(etat_jeu)
-        M = [k for k in L if L(k) == valeur]
-        return meta_nombre_valeur(valeur, 2) and np.abs(M[1] - M[2]) == 2
-
-    return fx_contrainte
-
-
-# Je tente : 2 cartes d'une couleur, espacées d'au moins une carte
-def meta_2_couleur_non_adjacente(couleur):
-    def fx_contrainte(cartes):
-        L = couleurs_sur_table(etat_jeu)
-        M = [k for k in L if L(k) == couleur]
-        return meta_nombre_couleur(couleur, 2) and np.abs(M[1] - M[2]) > 2
-
-    return fx_contrainte
-
-
+# SIMON: si j'ai bien compris, la position des cartes n'est pas importante? dans ce cas felicitations c'est correct!
 # Je tente : les 4 cartes se suivent
 def meta_4_valeurs_se_suivent():
     def fx_contrainte(cartes):
-        L = valeurs_sur_table(etat_jeu)
+        L = cartes
         return (
             {1, 2, 3, 4} <= set(L)
             or {2, 3, 4, 5} <= set(L)
@@ -130,43 +69,42 @@ def meta_4_valeurs_se_suivent():
     return fx_contrainte
 
 
-# Je tente : 3 cartes se suivent dans l'ordre
+# SIMON: vraiment pas loin ta tentative! je rends ca + generique
+# SIMON: pas vraiment besoin de meta fonction ici, on pourrait directement mettre Mission(nom="truc", contrainte=fx_3_valeurs_se_suivent)
 def meta_3_valeurs_se_suivent_dans_lordre():
     def fx_contrainte(cartes):
-        L = valeurs_sur_table(etat_jeu)
-        return (
-            L[1] == L[2] + 1 == L[3] + 2
-            or L[1] == L[2] - 1 == L[3] - 2
-            or L[2] == L[3] + 1 == L[4] + 2
-            or L[2] == L[3] - 1 == L[4] - 2
-        )
+        # SIMON: pas besoin de lire l'etat global: on te donne les cartes en input deja
+        # SIMON: une liste commence avec 0, pas 1 :p
+        L = [x.valeurcarte for x in cartes]
+        for idx in range(len(L) - 2):
+            if L[idx] == L[idx+1] + 1 and L[idx] == L[idx+2] + 2:
+                return True
+        return False
 
     return fx_contrainte
 
 
 # Je tente : deux couleurs ont la même somme de valeurs
-def somme_couleurs_egale(couleur1, couleur2):
+def meta_somme_couleurs_egale(couleur1, couleur2):
     def fx_contrainte(cartes):
-        L = valeurs_sur_table(etat_jeu)
-        M = couleurs_sur_table(etat_jeu)
-        return sum(M[x] for x in range(0, 4) if L[x] == couleur1) == sum(
-            M[x] for x in range(0, 4) if L[x] == couleur2
-        )
+        somme_couleur1 = sum(x.valeurcarte for x in cartes if x.couleurcarte == couleur1)
+        somme_couleur2 = sum(x.valeurcarte for x in cartes if x.couleurcarte == couleur2)
+        return somme_couleur1 == somme_couleur2
 
     return fx_contrainte
 
 
 # Je tente : une couleur1 a 2* la somme des valeurs d'une autre couleur2
-def somme_couleurs_double(couleur1, couleur2):
+def meta_somme_couleurs_double(couleur1, couleur2):
     def fx_contrainte(cartes):
-        L = valeurs_sur_table(etat_jeu)
-        M = couleurs_sur_table(etat_jeu)
-        return sum(M[x] for x in range(0, 4) if L[x] == couleur1) == sum(
-            M[x] for x in range(0, 4) if L[x] == couleur2
-        )
+        somme_couleur1 = sum(x.valeurcarte for x in cartes if x.couleurcarte == couleur1)
+        somme_couleur2 = sum(x.valeurcarte for x in cartes if x.couleurcarte == couleur2)
+        return somme_couleur1 == 2 * somme_couleur2
 
     return fx_contrainte
 
+fx_valeurs_distinctes = lambda cartes: len(set(x.valeurcarte for x in cartes)) == N_CARTES_SUR_TABLE
+fx_couleurs_distinctes = lambda cartes: len(set(x.couleurcarte for x in cartes)) == N_CARTES_SUR_TABLE
 
 # Création du paquet de missions
 Pioche_missions = [
@@ -175,63 +113,67 @@ Pioche_missions = [
     Mission(nom="Somme=18", contrainte=lambda cartes: sum(x.valeurcarte for x in cartes) == 18),
     Mission(nom="Somme=20", contrainte=lambda cartes: sum(x.valeurcarte for x in cartes) == 20),
 
-    Mission(nom="R ou B", contrainte=meta_couleurs(["rouge", "bleu"])),
-    Mission(nom="J ou B", contrainte=meta_couleurs(["jaune", "bleu"])),
-    Mission(nom="R ou V", contrainte=meta_couleurs(["rouge", "vert"])),
-    Mission(nom="J ou V", contrainte=meta_couleurs(["jaune", "vert"])),
+    Mission(nom="R ou B", contrainte=lambda cartes: all(x.couleurcarte in ["rouge", "bleu"] for x in cartes)),
+    Mission(nom="J ou B", contrainte=lambda cartes: all(x.couleurcarte in ["jaune", "bleu"] for x in cartes)),
+    Mission(nom="R ou V", contrainte=lambda cartes: all(x.couleurcarte in ["rouge", "vert"] for x in cartes)),
+    Mission(nom="J ou V", contrainte=lambda cartes: all(x.couleurcarte in ["jaune", "vert"] for x in cartes)),
 
-    Mission(nom="Somme_Rouge==4", contrainte=meta_somme_couleur("rouge", 4)),
-    Mission(nom="Somme_Rouge==10", contrainte=meta_somme_couleur("rouge", 10)),
-    Mission(nom="Somme_Jaune==2", contrainte=meta_somme_couleur("jaune", 2)),
-    Mission(nom="Somme_Jaune==11", contrainte=meta_somme_couleur("jaune", 11)),
-    Mission(nom="Somme_Bleue==3", contrainte=meta_somme_couleur("bleu", 3)),
-    Mission(nom="Somme_Bleue==9", contrainte=meta_somme_couleur("bleu", 9)),
-    Mission(nom="Somme_Verte==6", contrainte=meta_somme_couleur("vert", 6)),
-    Mission(nom="Somme_Verte==7", contrainte=meta_somme_couleur("vert", 7)),
+    Mission(nom="Somme_Rouge==4", contrainte=lambda cartes: sum(x.valeurcarte for x in cartes if x.couleurcarte == "rouge") == 4),
+    Mission(nom="Somme_Rouge==10", contrainte=lambda cartes: sum(x.valeurcarte for x in cartes if x.couleurcarte == "rouge") == 10),
+    Mission(nom="Somme_Jaune==2", contrainte=lambda cartes: sum(x.valeurcarte for x in cartes if x.couleurcarte == "jaune") == 2),
+    Mission(nom="Somme_Jaune==11", contrainte=lambda cartes: sum(x.valeurcarte for x in cartes if x.couleurcarte == "jaune") == 11),
+    Mission(nom="Somme_Bleue==3", contrainte=lambda cartes: sum(x.valeurcarte for x in cartes if x.couleurcarte == "bleu") == 3),
+    Mission(nom="Somme_Bleue==9", contrainte=lambda cartes: sum(x.valeurcarte for x in cartes if x.couleurcarte == "bleu") == 9),
+    Mission(nom="Somme_Verte==6", contrainte=lambda cartes: sum(x.valeurcarte for x in cartes if x.couleurcarte == "vert") == 6),
+    Mission(nom="Somme_Verte==7", contrainte=lambda cartes: sum(x.valeurcarte for x in cartes if x.couleurcarte == "vert") == 7),
 
-    Mission(nom="Tout_impair", contrainte=meta_couleurs([1, 3, 5, 7])),
-    Mission(nom="Tout_pair", contrainte=meta_couleurs([2, 4, 6])),
-    Mission(nom="Tout>=5", contrainte=meta_couleurs([5, 6, 7])),
-    Mission(nom="Tout<=3", contrainte=meta_couleurs([1, 2, 3])),
+    # % c'est l'operateur modulo, x.valeur = 1 [2] c'est pareil que "impair"
+    Mission(nom="Tout_impair", contrainte=lambda cartes: all(x.valeur % 2 == 1 for x in cartes)),
+    Mission(nom="Tout_pair", contrainte=lambda cartes: all(x.valeur % 2 == 0 for x in cartes)),
+    Mission(nom="Tout>=5", contrainte=lambda cartes: all(x.valeur >= 5 for x in cartes)),
+    Mission(nom="Tout<=3", contrainte=lambda cartes: all(x.valeur <= 3 for x in cartes)),
 
-    Mission(nom="Trois_Vertes", contrainte=meta_nombre_couleur("vert", 3)),
-    Mission(nom="Trois_Bleues", contrainte=meta_nombre_couleur("bleu", 3)),
-    Mission(nom="Trois_Rouges", contrainte=meta_nombre_couleur("rouge", 3)),
-    Mission(nom="Trois_Jaunes", contrainte=meta_nombre_couleur("jaune", 3)),
+    # l'astuce pour compter le nombre de cartes qui respectent une condition, c'est de faire une sum(1 for x in cartes if condition)
+    # ou bien len(list(filter(cartes, lambda x: condition)))
+    Mission(nom="Trois_Vertes", contrainte=lambda cartes: sum(1 for x in cartes if x.couleurcarte == "vert") == 3),
+    Mission(nom="Trois_Bleues", contrainte=lambda cartes: sum(1 for x in cartes if x.couleurcarte == "bleu") == 3),
+    Mission(nom="Trois_Rouges", contrainte=lambda cartes: sum(1 for x in cartes if x.couleurcarte == "rouge") == 3),
+    Mission(nom="Trois_Jaunes", contrainte=lambda cartes: sum(1 for x in cartes if x.couleurcarte == "jaune") == 3),
 
-    Mission(nom="Deux_Vertes_adjacentes", contrainte=meta_2_couleur_adjacente("vert")),
-    Mission(nom="Deux_Rouges_adjacentes", contrainte=meta_2_couleur_adjacente("rouge")),
-    Mission(nom="Deux_Jaunes_adjacentes", contrainte=meta_2_couleur_adjacente("jaune")),
-    Mission(nom="Deux_Bleues_adjacentes", contrainte=meta_2_couleur_adjacente("bleu")),
+    # rappel: D=1 signifie adjacentes
+    Mission(nom="Deux_Vertes_adjacentes", contrainte=meta_2_espacees(lambda x: x.couleur == "vert", D=1)),
+    Mission(nom="Deux_Rouges_adjacentes", contrainte=meta_2_espacees(lambda x: x.couleur == "rouge", D=1)),
+    Mission(nom="Deux_Jaunes_adjacentes", contrainte=meta_2_espacees(lambda x: x.couleur == "jaune", D=1)),
+    Mission(nom="Deux_Bleues_adjacentes", contrainte=meta_2_espacees(lambda x: x.couleur == "bleu", D=1)),
 
-    Mission(nom="Deux_Vertes_espacees", contrainte=meta_2_couleur_non_adjacente("vert")),
-    Mission(nom="Deux_Rouges_espacees", contrainte=meta_2_couleur_non_adjacente("rouge")),
-    Mission(nom="Deux_Jaunes_espacees", contrainte=meta_2_couleur_non_adjacente("jaune")),
-    Mission(nom="Deux_Bleues_espacees", contrainte=meta_2_couleur_non_adjacente("bleu")),
+    Mission(nom="Deux_Vertes_espacees", contrainte=meta_2_non_adjacents(lambda x: x.couleur == "vert")),
+    Mission(nom="Deux_Rouges_espacees", contrainte=meta_2_non_adjacents(lambda x: x.couleur == "rouge")),
+    Mission(nom="Deux_Jaunes_espacees", contrainte=meta_2_non_adjacents(lambda x: x.couleur == "jaune")),
+    Mission(nom="Deux_Bleues_espacees", contrainte=meta_2_non_adjacents(lambda x: x.couleur == "bleu")),
 
-    Mission(nom="Deux_Vertes_espacees_de_1", contrainte=meta_2_couleur_espace_de_un("vert")),
-    Mission(nom="Deux_Rouges_espacees_de_1", contrainte=meta_2_couleur_espace_de_un("rouge")),
-    Mission(nom="Deux_Jaunes_espacees_de_1", contrainte=meta_2_couleur_espace_de_un("jaune")),
-    Mission(nom="Deux_Bleues_espacees_de_1", contrainte=meta_2_couleur_espace_de_un("bleu")),
-    Mission(nom="Deux_Impaires_espacees_de_1", contrainte=meta_2_valeurs_espace_de_un([1, 3, 5, 7])),
+    # rappel: D=2 signifie espacees de 1, x%2==1 signifie x impair
+    Mission(nom="Deux_Vertes_espacees_de_1", contrainte=meta_2_espacees(lambda x: x.couleur == "vert", D=2)),
+    Mission(nom="Deux_Rouges_espacees_de_1", contrainte=meta_2_espacees(lambda x: x.couleur == "rouge", D=2)),
+    Mission(nom="Deux_Jaunes_espacees_de_1", contrainte=meta_2_espacees(lambda x: x.couleur == "jaune", D=2)),
+    Mission(nom="Deux_Bleues_espacees_de_1", contrainte=meta_2_espacees(lambda x: x.couleur == "bleu", D=2)),
+    Mission(nom="Deux_Impaires_espacees_de_1", contrainte=meta_2_espacees(lambda x: x.valeurcarte % 2 == 1, D=2)),
 
-    # CETTE SECTION DYSFONCTIONNE
-    # Mission(nom="Valeurs_Distinctes", contrainte=len(set(valeurs_sur_table(etat_jeu))) ==4 )
-    # Mission(nom="Couleurs_Distinctes", contrainte=len(set(couleurs_sur_table(etat_jeu))) ==4 )
-    # Mission(nom="Valeurs_et_Couleurs_Distinctes", contrainte=(len(set(couleurs_sur_table(etat_jeu)))==4 and len(set(valeurs_sur_table(etat_jeu))) ==4))
+    Mission(nom="Valeurs_Distinctes", contrainte=fx_valeurs_distinctes),
+    Mission(nom="Couleurs_Distinctes", contrainte=fx_couleurs_distinctes),
+    Mission(nom="Valeurs_et_Couleurs_Distinctes", contrainte=lambda cartes: fx_valeurs_distinctes(cartes) and fx_couleurs_distinctes(cartes)),
 
     Mission(nom="3_se_suivant_dans_lordre", contrainte=meta_3_valeurs_se_suivent_dans_lordre()),
     Mission(nom="4_se_suivent", contrainte=meta_4_valeurs_se_suivent()),
 
-    Mission(nom="Somme_Jaune==Somme_Verte", contrainte=somme_couleurs_egale("jaune", "vert")),
-    Mission(nom="Somme_Jaune==Somme_Rouge", contrainte=somme_couleurs_egale("jaune", "rouge")),
-    Mission(nom="Somme_Bleue==Somme_Verte", contrainte=somme_couleurs_egale("bleu", "vert")),
-    Mission(nom="Somme_Bleue==Somme_Rouge", contrainte=somme_couleurs_egale("bleu", "rouge")),
+    Mission(nom="Somme_Jaune==Somme_Verte", contrainte=meta_somme_couleurs_egale("jaune", "vert")),
+    Mission(nom="Somme_Jaune==Somme_Rouge", contrainte=meta_somme_couleurs_egale("jaune", "rouge")),
+    Mission(nom="Somme_Bleue==Somme_Verte", contrainte=meta_somme_couleurs_egale("bleu", "vert")),
+    Mission(nom="Somme_Bleue==Somme_Rouge", contrainte=meta_somme_couleurs_egale("bleu", "rouge")),
 
-    Mission(nom="2*Somme_Verte==Somme_Jaune", contrainte=somme_couleurs_double("jaune", "vert")),
-    Mission(nom="2*Somme_Jaune==Somme_Rouge", contrainte=somme_couleurs_double("rouge", "jaune")),
-    Mission(nom="2*Somme_Bleue==Somme_Verte", contrainte=somme_couleurs_double("vers", "bleu")),
-    Mission(nom="2*Somme_Rouge==Somme_Bleue", contrainte=somme_couleurs_double("bleu", "rouge")),
+    Mission(nom="2*Somme_Verte==Somme_Jaune", contrainte=meta_somme_couleurs_double("jaune", "vert")),
+    Mission(nom="2*Somme_Jaune==Somme_Rouge", contrainte=meta_somme_couleurs_double("rouge", "jaune")),
+    Mission(nom="2*Somme_Bleue==Somme_Verte", contrainte=meta_somme_couleurs_double("vers", "bleu")),
+    Mission(nom="2*Somme_Rouge==Somme_Bleue", contrainte=meta_somme_couleurs_double("bleu", "rouge")),
 ]
 
 
