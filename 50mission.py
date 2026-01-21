@@ -7,6 +7,8 @@
 import random
 import numpy as np
 
+N_CARTES_EN_MAIN = 4
+N_MISSIONS_SUR_TABLE = 4
 N_CARTES_SUR_TABLE = 4
 DEBUG = True
 
@@ -21,6 +23,9 @@ class Mission:
     def __init__(self, nom, contrainte):
         self.nom = nom
         self.contrainte = contrainte
+
+    def check_fini(self, cartes_sur_table):
+        return self.contrainte(cartes_sur_table)
 
 
 # SIMON: Les missions comme ca sont pas evidentes a coder, elles meritent d'avoir leur propre meta fonction pour pas perdre en lisibilite
@@ -213,10 +218,10 @@ def initialiser_jeu():
     # SIMON: je laisse un commentaire sur github pour expliquer le souci subtil
     joueur_actuel = 0
     etat_jeu = {
-        "Main joueur 0": [Pioche_cartes.pop() for _ in range(4)],
-        "Main joueur 1": [Pioche_cartes.pop() for _ in range(4)],
-        "Cartes sur table": [Pioche_cartes.pop() for _ in range(4)],
-        "Missions sur table": [Pioche_missions.pop() for _ in range(N_CARTES_SUR_TABLE)],
+        "Main joueur 0": [Pioche_cartes.pop() for _ in range(N_CARTES_EN_MAIN)],
+        "Main joueur 1": [Pioche_cartes.pop() for _ in range(N_CARTES_EN_MAIN)],
+        "Cartes sur table": [Pioche_cartes.pop() for _ in range(N_CARTES_SUR_TABLE)],
+        "Missions sur table": [Pioche_missions.pop() for _ in range(N_MISSIONS_SUR_TABLE)],
         "pioche de cartes": Pioche_cartes,
         "pioche de missions": Pioche_missions,
         "tour": 0,
@@ -319,7 +324,8 @@ def coups_possibles(joueur, etat_jeu):
 # Choix d'une action
 def choisir_action(joueur, etat_jeu):
     coups = coups_possibles(joueur, etat_jeu)
-    assert len(coups) > 0, "ERREUR: Aucun coup possible" # Facon propre de s'assurer (assert) qu'on a au moins un coup
+    # Facon propre de s'assurer (assert) qu'on a au moins un coup
+    assert len(coups) > 0, "ERREUR: Aucun coup possible: je ne connais pas les regles du jeu, a completer"
     return random.choice(coups)
 
 
@@ -335,12 +341,32 @@ def appliquer_action(action, joueur, etat_jeu):
         nouvelle_carte = pioche.pop() # Enlever la carte de la pioche
         main_joueur.append(nouvelle_carte)  # Ajouter la carte de piochee a la main du joueur
 
-    etat_jeu["Cartes sur table"][idx_table] = carte_jouee # Remplacer la carte sur table
+    cartes_sur_table = etat_jeu["Cartes sur table"]
+    cartes_sur_table[idx_table] = carte_jouee # Remplacer la carte sur table
 
-    for mission in etat_jeu["Missions sur table"]:  # Changer les missions réussies
-        if False: # TODO: je ferai cette partie au prochain commit pour ne pas spoil :)
-            etat_jeu["Missions sur table"][x] = etat_jeu["pioche de missions"][ 0 ]  # Piocher une nouvelle mission
-            etat_jeu["pioche de missions"].remove( etat_jeu["pioche de missions"][0])  # Enlever la mission de la pioche
+    missions = etat_jeu["Missions sur table"]
+    liste_fini = [m.check_fini(cartes_sur_table) for m in missions] # il ne faut appeler check_fini que une fois
+    missions_finies = [m for (m, fini) in zip(missions, liste_fini) if fini]
+    missions_restantes = [m for (m, fini) in zip(missions, liste_fini) if not fini]
+    assert len(missions_finies) + len(missions_restantes) == len(missions), "ERREUR: Bizarre le filtre des missions n'a pas bien fonctionne!"
+
+    if DEBUG:
+        if len(missions_finies) > 0:
+            print(f"┌─ Missions tout juste finies ({len(missions_finies)} missions)")
+            for m in missions_finies:
+                print(f"│    - {m.nom}")
+            print("└────────────────────────")
+        else:
+            print("Aucune mission finie ce tour ci.")
+
+    etat_jeu["Missions sur table"] = missions_restantes.copy()
+
+    # Completer les missions sur table
+    missions = etat_jeu["Missions sur table"]
+    pioche_missions = etat_jeu["pioche de missions"]
+    while len(missions) < N_MISSIONS_SUR_TABLE and len(pioche_missions) > 0:
+        nouvelle_mission = pioche_missions.pop()
+        missions.append(nouvelle_mission)
 
 
 # Condition de victoire ou défaite et vérification de fin de jeu
