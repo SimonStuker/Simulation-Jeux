@@ -134,11 +134,11 @@ Pioche_missions = [
     Mission(nom="Somme_Verte==6", contrainte=lambda cartes: sum(x.valeurcarte for x in cartes if x.couleurcarte == "vert") == 6),
     Mission(nom="Somme_Verte==7", contrainte=lambda cartes: sum(x.valeurcarte for x in cartes if x.couleurcarte == "vert") == 7),
 
-    # % c'est l'operateur modulo, x.valeur = 1 [2] c'est pareil que "impair"
-    Mission(nom="Tout_impair", contrainte=lambda cartes: all(x.valeur % 2 == 1 for x in cartes)),
-    Mission(nom="Tout_pair", contrainte=lambda cartes: all(x.valeur % 2 == 0 for x in cartes)),
-    Mission(nom="Tout>=5", contrainte=lambda cartes: all(x.valeur >= 5 for x in cartes)),
-    Mission(nom="Tout<=3", contrainte=lambda cartes: all(x.valeur <= 3 for x in cartes)),
+    # % c'est l'operateur modulo, x.valeurcarte = 1 [2] c'est pareil que "impair"
+    Mission(nom="Tout_impair", contrainte=lambda cartes: all(x.valeurcarte % 2 == 1 for x in cartes)),
+    Mission(nom="Tout_pair", contrainte=lambda cartes: all(x.valeurcarte % 2 == 0 for x in cartes)),
+    Mission(nom="Tout>=5", contrainte=lambda cartes: all(x.valeurcarte >= 5 for x in cartes)),
+    Mission(nom="Tout<=3", contrainte=lambda cartes: all(x.valeurcarte <= 3 for x in cartes)),
 
     # l'astuce pour compter le nombre de cartes qui respectent une condition, c'est de faire une sum(1 for x in cartes if condition)
     # ou bien len(list(filter(cartes, lambda x: condition)))
