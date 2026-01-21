@@ -8,6 +8,7 @@ import random
 import numpy as np
 
 N_CARTES_SUR_TABLE = 4
+DEBUG = True
 
 global Pioche_cartes, Pioche_missions, joueur_actuel, etat_jeu
 
@@ -15,9 +16,10 @@ global Pioche_cartes, Pioche_missions, joueur_actuel, etat_jeu
 # Création des missions
 class Mission:
     nom = ""
-    contrainte = ""
+    contrainte = lambda: print("Cette mission n'a pas de contrainte (contrainte par defaut)")
 
     def __init__(self, nom, contrainte):
+        self.nom = nom
         self.contrainte = contrainte
 
 
@@ -204,17 +206,19 @@ Pioche_cartes = Pioche_cartes + Pioche_cartes
 
 # Mise en place
 def initialiser_jeu():
-    global Pioche_cartes, Pioche_missions, etat_jeu
+    global Pioche_cartes, Pioche_missions, etat_jeu, joueur_actuel
     # LE MELANGE NE FONCTIONNE PAS
     # Pioche_missions=random.shuffle(Pioche_missions)
     # Pioche_cartes=random.shuffle(Pioche_cartes)
+    # SIMON: je laisse un commentaire sur github pour expliquer le souci subtil
+    joueur_actuel = 0
     etat_jeu = {
-        "Main joueur 1": Pioche_cartes[0:4],
-        "Main joueur 2": Pioche_cartes[4:9],
-        "Cartes sur table": Pioche_cartes[9:14],
-        "Missions sur table": Pioche_missions[0:4],
-        "pioche de missions": Pioche_missions[4:],
-        "pioche de cartes": Pioche_cartes[14:],
+        "Main joueur 0": [Pioche_cartes.pop() for _ in range(4)],
+        "Main joueur 1": [Pioche_cartes.pop() for _ in range(4)],
+        "Cartes sur table": [Pioche_cartes.pop() for _ in range(4)],
+        "Missions sur table": [Pioche_missions.pop() for _ in range(N_CARTES_SUR_TABLE)],
+        "pioche de cartes": Pioche_cartes,
+        "pioche de missions": Pioche_missions,
         "tour": 0,
         "termine": False,
     }
@@ -226,96 +230,134 @@ def jouer_partie(etat_jeu):
     while not etat_jeu["termine"]:
         jouer_un_tour(etat_jeu)
 
+def debug_tour(etat_jeu, action, joueur):
+    def _fmt_carte(c):
+        return f"{c.valeurcarte}-{c.couleurcarte:<5}"
+
+    def _fmt_list_cartes(lst):
+        return " | ".join([_fmt_carte(c) for c in lst])
+
+    n_tour = etat_jeu["tour"]
+    cartes = etat_jeu["Cartes sur table"]
+    missions = etat_jeu["Missions sur table"]
+    pioche_cartes = etat_jeu["pioche de cartes"]
+    pioche_missions = etat_jeu["pioche de missions"]
+    mains = [
+        etat_jeu["Main joueur 0"],
+        etat_jeu["Main joueur 1"],
+    ]
+
+    title = f" TOUR {n_tour} "
+    bar = "═" * max(40, len(title) + 10)
+    print(f"╔{bar}╗")
+    print(f"║{title:^{len(bar)}}║")
+    print(f"╚{bar}╝")
+
+    print("┌─ Action actuelle")
+    print(f"│ Joueur: {joueur}")
+    print(f"│ Action: {_fmt_carte(mains[joueur][action[0]])} -> {_fmt_carte(cartes[action[1]])}")
+    print("└────────────────────────")
+
+    print("┌─ Mains des joueurs")
+    print(f"│   Joueur 0 ( {len(mains[0])} cartes )")
+    print(f"│     {_fmt_list_cartes(mains[0])}")
+    print(f"│   Joueur 1 ( {len(mains[1])} cartes )")
+    print(f"│     {_fmt_list_cartes(mains[1])}")
+    print("└────────────────────────")
+
+    print(f"┌─ Cartes sur table ( {len(cartes)} cartes )")
+    print(f"│     {_fmt_list_cartes(cartes)}")
+    print("└────────────────────────")
+
+    print("┌─ Missions sur table")
+    for m in missions:
+        print(f"│    - {m.nom}")
+    print("└────────────────────────")
+
+    print("┌─ Pioches")
+    print(f"│   Cartes   : {len(pioche_cartes):3} restantes")
+    print(f"│   Missions : {len(pioche_missions):3} restantes")
+    print("└────────────────────────")
+
 
 # Tour de jeu
 def jouer_un_tour(etat_jeu):
     global joueur_actuel
-    joueur_actuel = 1 + etat_jeu["tour"] % 2
     action = choisir_action(joueur_actuel, etat_jeu)
+    if DEBUG:
+        debug_tour(etat_jeu, action, joueur_actuel)
     appliquer_action(action, joueur_actuel, etat_jeu)
     verifier_fin_jeu(etat_jeu)
+    joueur_actuel = (1 + etat_jeu["tour"]) % 2
     etat_jeu["tour"] += 1
 
 
 # Coups possibles du joueur
 def coups_possibles(joueur, etat_jeu):
-    global joueur_actuel
-    CP = []
-    if joueur_actuel == 1:
-        for x in etat_jeu["Main joueur 1"]:
-            for y in etat_jeu["Cartes sur table"]:
+    """
+    Retourne une liste de tuples (idx_1, idx_2)
+    idx_1: indice de la carte jouable dans la main du joueur
+    idx_2: indice de la carte sur la table remplacable
+    """
+    coups = []
+    if joueur == 0:
+        for idx_x, x in enumerate(etat_jeu["Main joueur 0"]):
+            for idx_y, y in enumerate(etat_jeu["Cartes sur table"]):
                 if x.valeurcarte == y.valeurcarte or x.couleurcarte == y.couleurcarte:
-                    CP.append([x, y])
-    if joueur_actuel == 2:
-        for x in etat_jeu["Main joueur 2"]:
-            for y in etat_jeu("Cartes sur table"):
-                if x.valeurcarte == y.couleurcarte or x.couleur == y.couleurcarte:
-                    CP.append([x, y])
-    return CP
+                    coups.append((idx_x, idx_y))
+
+    else:
+        assert joueur == 1, f"ERREUR: Bizarre, le joueur ne vaut ni 0 ni 1: {joueur}"
+        for idx_x, x in enumerate(etat_jeu["Main joueur 1"]):
+            for idx_y, y in enumerate(etat_jeu["Cartes sur table"]):
+                if x.valeurcarte == y.valeurcarte or x.couleurcarte == y.couleurcarte:
+                    coups.append((idx_x, idx_y))
+
+    return coups
 
 
 # Choix d'une action
 def choisir_action(joueur, etat_jeu):
-    if not coups_possibles(joueur, etat_jeu) == []:
-        return random.choice(coups_possibles(joueur, etat_jeu))
-    ## PROBLEME SI AUCUN COUP POSSIBLE??
+    coups = coups_possibles(joueur, etat_jeu)
+    assert len(coups) > 0, "ERREUR: Aucun coup possible" # Facon propre de s'assurer (assert) qu'on a au moins un coup
+    return random.choice(coups)
 
 
 # Résultat de l'action
 def appliquer_action(action, joueur, etat_jeu):
-    action = choisir_action(
-        joueur, etat_jeu
-    )  # Action = couple [carte main joueur , carte sur table] jouable
+    # SIMON: je laisse un commentaire sur github pour expliquer le souci subtil
+    idx_main, idx_table = action
 
-    # CETTE PARTIE EST FOIREUSE, IL FAUT LA RECTIFIER
+    pioche = etat_jeu["pioche de cartes"]
+    main_joueur = etat_jeu[f"Main joueur {joueur}"]
+    carte_jouee = main_joueur.pop(idx_main) # Enlever la carte de la main du joueur
+    if len(pioche) > 0:
+        nouvelle_carte = pioche.pop() # Enlever la carte de la pioche
+        main_joueur.append(nouvelle_carte)  # Ajouter la carte de piochee a la main du joueur
 
-    action[0] = action[1]  # Changer la carte sur la table
+    etat_jeu["Cartes sur table"][idx_table] = carte_jouee # Remplacer la carte sur table
 
-    if joueur_actuel == 1:  # refaire la main du joueur
-        etat_jeu["Main joueur 1"].remove(
-            action[0]
-        )  # Enlever la carte de la main du joueur
-        etat_jeu["Main joueur 1"].append(
-            etat_jeu["pioche de cartes"][0]
-        )  # Ajouter la 1e carte de la pioche à la main du joueur
-        etat_jeu["pioche de cartes"].remove(
-            etat_jeu["pioche de cartes"][0]
-        )  # Enlever la 1e carte de la pioche
-    if joueur_actuel == 2:  # refaire la main du joueur
-        etat_jeu["Main joueur 2"].remove(action[0])
-        etat_jeu["Main joueur 2"].append(etat_jeu["pioche de cartes"][0])
-        etat_jeu["pioche de cartes"].remove(etat_jeu["pioche de cartes"][0])
-
-    for x in etat_jeu["Missions sur table"]:  # Changer les missions réussies
-        if x.condition:
-            etat_jeu["Missions sur table"][x] = etat_jeu["pioche de missions"][
-                0
-            ]  # Piocher une nouvelle mission
-            etat_jeu["pioche de missions"].remove(
-                etat_jeu["pioche de missions"][0]
-            )  # Enlever la mission de la pioche
+    for mission in etat_jeu["Missions sur table"]:  # Changer les missions réussies
+        if False: # TODO: je ferai cette partie au prochain commit pour ne pas spoil :)
+            etat_jeu["Missions sur table"][x] = etat_jeu["pioche de missions"][ 0 ]  # Piocher une nouvelle mission
+            etat_jeu["pioche de missions"].remove( etat_jeu["pioche de missions"][0])  # Enlever la mission de la pioche
 
 
 # Condition de victoire ou défaite et vérification de fin de jeu
 def condition_victoire(etat_jeu):
-    if etat_jeu["pioche de missions"] == []:
-        return True
-    else:
-        return False
+    # SIMON: petit commentaire sur github
+    return len(etat_jeu["pioche de missions"]) == 0
 
 
 def condition_defaite(etat_jeu):
-    if coups_possibles(etat_jeu) == []:
-        return True
-    else:
-        return False
+    # SIMON: petit commentaire sur github
+    coups_j1 = coups_possibles(0, etat_jeu)
+    coups_j2 = coups_possibles(1, etat_jeu)
+    return len(coups_j1) == 0 and len(coups_j2) == 0
 
 
 def verifier_fin_jeu(etat_jeu):
-    if condition_victoire(etat_jeu):
-        etat_jeu["termine"] = True
-    if condition_defaite(etat_jeu):
-        etat_jeu["termine"] = True
+    etat_jeu["termine"] = condition_victoire(etat_jeu) or condition_defaite(etat_jeu)
 
 
 # Affichage du résultat
@@ -325,9 +367,12 @@ def afficher_resultats(etat_jeu):
 
 # Boucle principale
 def main():
+    if DEBUG:
+        print("=================================")
+        print("= Mode DEBUG actif (DEBUG=True) =")
+        print("=================================")
+
     initialiser_jeu()
-    print("DEBUG")
-    print(etat_jeu["Main joueur 1"])
     jouer_partie(etat_jeu)
     afficher_resultats(etat_jeu)
 
