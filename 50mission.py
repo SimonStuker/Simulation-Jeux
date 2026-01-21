@@ -143,21 +143,21 @@ Pioche_missions = [
     Mission(nom="Trois_Jaunes", contrainte=lambda cartes: sum(1 for x in cartes if x.couleurcarte == "jaune") == 3),
 
     # rappel: D=1 signifie adjacentes
-    Mission(nom="Deux_Vertes_adjacentes", contrainte=meta_2_espacees(lambda x: x.couleur == "vert", D=1)),
-    Mission(nom="Deux_Rouges_adjacentes", contrainte=meta_2_espacees(lambda x: x.couleur == "rouge", D=1)),
-    Mission(nom="Deux_Jaunes_adjacentes", contrainte=meta_2_espacees(lambda x: x.couleur == "jaune", D=1)),
-    Mission(nom="Deux_Bleues_adjacentes", contrainte=meta_2_espacees(lambda x: x.couleur == "bleu", D=1)),
+    Mission(nom="Deux_Vertes_adjacentes", contrainte=meta_2_espacees(lambda x: x.couleurcarte == "vert", D=1)),
+    Mission(nom="Deux_Rouges_adjacentes", contrainte=meta_2_espacees(lambda x: x.couleurcarte == "rouge", D=1)),
+    Mission(nom="Deux_Jaunes_adjacentes", contrainte=meta_2_espacees(lambda x: x.couleurcarte == "jaune", D=1)),
+    Mission(nom="Deux_Bleues_adjacentes", contrainte=meta_2_espacees(lambda x: x.couleurcarte == "bleu", D=1)),
 
-    Mission(nom="Deux_Vertes_espacees", contrainte=meta_2_non_adjacents(lambda x: x.couleur == "vert")),
-    Mission(nom="Deux_Rouges_espacees", contrainte=meta_2_non_adjacents(lambda x: x.couleur == "rouge")),
-    Mission(nom="Deux_Jaunes_espacees", contrainte=meta_2_non_adjacents(lambda x: x.couleur == "jaune")),
-    Mission(nom="Deux_Bleues_espacees", contrainte=meta_2_non_adjacents(lambda x: x.couleur == "bleu")),
+    Mission(nom="Deux_Vertes_espacees", contrainte=meta_2_non_adjacents(lambda x: x.couleurcarte == "vert")),
+    Mission(nom="Deux_Rouges_espacees", contrainte=meta_2_non_adjacents(lambda x: x.couleurcarte == "rouge")),
+    Mission(nom="Deux_Jaunes_espacees", contrainte=meta_2_non_adjacents(lambda x: x.couleurcarte == "jaune")),
+    Mission(nom="Deux_Bleues_espacees", contrainte=meta_2_non_adjacents(lambda x: x.couleurcarte == "bleu")),
 
     # rappel: D=2 signifie espacees de 1, x%2==1 signifie x impair
-    Mission(nom="Deux_Vertes_espacees_de_1", contrainte=meta_2_espacees(lambda x: x.couleur == "vert", D=2)),
-    Mission(nom="Deux_Rouges_espacees_de_1", contrainte=meta_2_espacees(lambda x: x.couleur == "rouge", D=2)),
-    Mission(nom="Deux_Jaunes_espacees_de_1", contrainte=meta_2_espacees(lambda x: x.couleur == "jaune", D=2)),
-    Mission(nom="Deux_Bleues_espacees_de_1", contrainte=meta_2_espacees(lambda x: x.couleur == "bleu", D=2)),
+    Mission(nom="Deux_Vertes_espacees_de_1", contrainte=meta_2_espacees(lambda x: x.couleurcarte == "vert", D=2)),
+    Mission(nom="Deux_Rouges_espacees_de_1", contrainte=meta_2_espacees(lambda x: x.couleurcarte == "rouge", D=2)),
+    Mission(nom="Deux_Jaunes_espacees_de_1", contrainte=meta_2_espacees(lambda x: x.couleurcarte == "jaune", D=2)),
+    Mission(nom="Deux_Bleues_espacees_de_1", contrainte=meta_2_espacees(lambda x: x.couleurcarte == "bleu", D=2)),
     Mission(nom="Deux_Impaires_espacees_de_1", contrainte=meta_2_espacees(lambda x: x.valeurcarte % 2 == 1, D=2)),
 
     Mission(nom="Valeurs_Distinctes", contrainte=fx_valeurs_distinctes),
