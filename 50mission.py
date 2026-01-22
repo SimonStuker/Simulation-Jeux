@@ -84,7 +84,7 @@ def meta_3_valeurs_se_suivent_dans_lordre():
         # SIMON: une liste commence avec 0, pas 1 :p
         L = [x.valeurcarte for x in cartes]
         for idx in range(len(L) - 2):
-            if L[idx] == L[idx+1] + 1 and L[idx] == L[idx+2] + 2:
+            if (L[idx] == L[idx+1] + 1 and L[idx] == L[idx+2] + 2) or (L[idx] == L[idx+1] - 1 and L[idx] == L[idx+2] - 2):
                 return True
         return False
 
@@ -225,6 +225,8 @@ def initialiser_jeu():
         "pioche de missions": Pioche_missions,
         "tour": 0,
         "termine": False,
+        "defausse" : [],
+        "sprint final": False,
     }
     return etat_jeu
 
@@ -294,7 +296,13 @@ def jouer_un_tour(etat_jeu):
     verifier_fin_jeu(etat_jeu)
     joueur_actuel = (1 + etat_jeu["tour"]) % 2
     etat_jeu["tour"] += 1
-
+    
+    # Si 25 missions ont été réalisées pour la premiere fois, mélange la défausse à la pioche et reprendre.
+    if len(Pioche_missions)<25 and not etat_jeu["sprint_final"]:
+        etat_jeu["sprint_final"]=True
+        random.shuffle(etat_jeu("defausse"))
+        etat_jeu["pioche de cartes"]=etat_jeu["pioche de cartes"]+etat_jeu["defausse"]
+        
 
 # Coups possibles du joueur
 def coups_possibles(joueur, etat_jeu):
@@ -324,7 +332,7 @@ def coups_possibles(joueur, etat_jeu):
 def choisir_action(joueur, etat_jeu):
     coups = coups_possibles(joueur, etat_jeu)
     # Facon propre de s'assurer (assert) qu'on a au moins un coup
-    assert len(coups) > 0, "ERREUR: Aucun coup possible: je ne connais pas les regles du jeu, a completer"
+    assert len(coups) > 0, "ERREUR: Aucun coup possible: le jeu aurait du s'arreter"
     return random.choice(coups)
 
 
@@ -335,6 +343,7 @@ def appliquer_action(action, joueur, etat_jeu):
 
     pioche = etat_jeu["pioche de cartes"]
     main_joueur = etat_jeu[f"Main joueur {joueur}"]
+    etat_jeu["defausse"].append(idx_main) #Placer la carte dans la défausse
     carte_jouee = main_joueur.pop(idx_main) # Enlever la carte de la main du joueur
     if len(pioche) > 0:
         nouvelle_carte = pioche.pop() # Enlever la carte de la pioche
@@ -378,7 +387,8 @@ def condition_defaite(etat_jeu):
     # SIMON: petit commentaire sur github
     coups_j1 = coups_possibles(0, etat_jeu)
     coups_j2 = coups_possibles(1, etat_jeu)
-    return len(coups_j1) == 0 and len(coups_j2) == 0
+    #Vérifier si le joueur suivant ne peut pas jouer. Dans ce cas c'est la défaite.
+    return (joueur_actuel==1 and len(coups_j1) == 0) or (joueur_actuel==0 and len(coups_j2) == 0) 
 
 
 def verifier_fin_jeu(etat_jeu):
