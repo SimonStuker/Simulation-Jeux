@@ -1,17 +1,18 @@
-pub trait State: {
-    type Move;
+pub mod policies;
 
-    fn new_initial_state(seed: Option<u64>) -> Self;
+pub trait State {
+    type Move;
+    type Moves: AsRef<[Self::Move]>;
 
     fn is_terminal(&self) -> bool;
-    fn possible_moves(&self) -> Vec<Self::Move>;
+    fn possible_moves(&self) -> Self::Moves;
 
     fn apply(&self, mv: &Self::Move) -> Self;
     fn apply_mut(&mut self, mv: &Self::Move);
 }
 
 pub trait Policy<S: State> {
-    fn choose_move(&mut self, state: &S, moves: &[S::Move]) -> S::Move;
+    fn choose_move<'a>(&mut self, state: &S, moves: &'a [S::Move]) -> &'a S::Move;
 }
 
 pub fn run_until<S, P, F>(mut state: S, policy: &mut P, mut fx_stop: F) -> S
@@ -22,7 +23,10 @@ where
 {
     while !state.is_terminal() && !fx_stop(&state) {
         let moves = state.possible_moves();
-        let chosen_move = policy.choose_move(&state, &moves);
+        if moves.as_ref().is_empty() {
+            break;
+        }
+        let chosen_move = policy.choose_move(&state, moves.as_ref());
         state.apply_mut(&chosen_move);
     }
 

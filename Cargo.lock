@@ -5,10 +5,27 @@ version = 4
 [[package]]
 name = "common"
 version = "0.1.0"
+dependencies = [
+ "fastrand",
+]
 
 [[package]]
-name = "jeu_fifty_missions"
+name = "fastrand"
+version = "2.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "37909eebbb50d72f9059c3b6d82c0463f2ff062c9e95845c43a6c9c0355411be"
+
+[[package]]
+name = "jeu_50missions"
 version = "0.1.0"
 dependencies = [
  "common",
+ "fastrand",
+ "smallvec",
 ]
+
+[[package]]
+name = "smallvec"
+version = "1.15.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "67b1b7a3b5fe4f1376887184045fcf45c69e92af734b7aaddc05fb777b6fbd03"
