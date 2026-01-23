@@ -26,6 +26,67 @@ struct Mission {
     constraint: fn(&TableCards) -> bool,
 }
 
+fn two_separate_cond<F>(table_cards: &TableCards, fx_cond: F) -> bool
+where
+    F: Fn(&'static Card) -> bool
+{
+    let matching_cond: [bool; N_TABLE_CARDS] = std::array::from_fn(|i| fx_cond(table_cards[i]) );
+    let two_adjacent = matching_cond.iter()
+        .zip(matching_cond.iter().skip(1))
+        .all(|(&cond1, &cond2)| cond1 && cond2);
+    let at_least_two = matching_cond.iter().filter(|&&cond| cond).count() >= 2;
+    at_least_two && !two_adjacent
+}
+
+fn two_barely_split_cond<F>(table_cards: &TableCards, fx_cond: F) -> bool
+where
+    F: Fn(&'static Card) -> bool
+{
+    let matching_cond: [bool; N_TABLE_CARDS] = std::array::from_fn(|i| fx_cond(table_cards[i]) );
+    let two_are_barely_split = matching_cond.iter()
+        .zip(matching_cond.iter().skip(2))
+        .all(|(&cond1, &cond2)| cond1 && cond2);
+    let exactly_two = matching_cond.iter().filter(|&&cond| cond).count() == 2;
+    exactly_two && two_are_barely_split
+}
+
+fn all_distinct_bits<F>(table_cards: &TableCards, fx_to_bitmask: F) -> bool
+where
+    F: Fn(&'static Card) -> u8
+{
+    let all_mask: u8 = table_cards.iter()
+        .map(|&card| fx_to_bitmask(card))
+        .reduce(|acc, bit| acc | bit)
+        .expect("No cards were provided to the all distinct check");
+    all_mask.count_ones() as usize == table_cards.len()
+}
+
+fn fn_three_consecutive_ordered(table_cards: &TableCards) -> bool {
+    let values: [u8; N_TABLE_CARDS] = std::array::from_fn(|i| table_cards[i].value.get());
+    values.windows(3)
+        .any(|w| matches!(
+            w,
+            [a, b, c] if *a == b+1 && *a == c+2 || *a == b-1 && *a == c-2
+        ))
+}
+
+fn fn_four_consecutive(table_cards: &TableCards) -> bool {
+    let mask = table_cards.iter()
+        .map(|c| c.value.as_bitmask())
+        .reduce(|acc, bit| acc | bit)
+        .expect("No cards were provided to the four consecutive check");
+    for i in 0..=4 {
+        if (mask >> i) & 0xF == 0xF {
+            return true;
+        }
+    }
+    false
+}
+
+fn fn_col_sum(table_cards: &TableCards, col: CardColor) -> u8 {
+    table_cards.iter().filter(|c| c.color == col).map(|c| c.value.get()).sum()
+}
+
 macro_rules! define_missions {
     (
         $mission_ident:ident = {
@@ -37,7 +98,7 @@ macro_rules! define_missions {
         $(
             fn $name($arg: &TableCards) -> bool {
                 $body
-            }
+           }
         )+
 
         const $mission_ident: &[Mission] = &[
@@ -83,38 +144,38 @@ define_missions! {
         three_blue   => |t| t.iter().filter(|c| c.color == CardColor::Blue  ).count() == 3,
         three_green  => |t| t.iter().filter(|c| c.color == CardColor::Green ).count() == 3,
 
-        two_adjacent_red     => |_| todo!("Mission not implemented: two_adjacent_red"),
-        two_adjacent_yellow  => |_| todo!("Mission not implemented: two_adjacent_yellow"),
-        two_adjacent_blue    => |_| todo!("Mission not implemented: two_adjacent_blue"),
-        two_adjacent_green   => |_| todo!("Mission not implemented: two_adjacent_green"),
+        two_adjacent_red    => |t| t.iter().zip(t.iter().skip(1)).any(|(c1, c2)| c1.color == CardColor::Red    && c2.color == CardColor::Red   ),
+        two_adjacent_yellow => |t| t.iter().zip(t.iter().skip(1)).any(|(c1, c2)| c1.color == CardColor::Yellow && c2.color == CardColor::Yellow),
+        two_adjacent_blue   => |t| t.iter().zip(t.iter().skip(1)).any(|(c1, c2)| c1.color == CardColor::Blue   && c2.color == CardColor::Blue  ),
+        two_adjacent_green  => |t| t.iter().zip(t.iter().skip(1)).any(|(c1, c2)| c1.color == CardColor::Green  && c2.color == CardColor::Green ),
 
-        two_separate_red     => |_| todo!("Mission not implemented: two_separate_red"),
-        two_separate_yellow  => |_| todo!("Mission not implemented: two_separate_yellow"),
-        two_separate_blue    => |_| todo!("Mission not implemented: two_separate_blue"),
-        two_separate_green   => |_| todo!("Mission not implemented: two_separate_green"),
-        two_separate_odds    => |_| todo!("Mission not implemented: two_separate_green"),
+        two_separate_red     => |t| two_separate_cond(t, |c| c.color == CardColor::Red   ),
+        two_separate_yellow  => |t| two_separate_cond(t, |c| c.color == CardColor::Yellow),
+        two_separate_blue    => |t| two_separate_cond(t, |c| c.color == CardColor::Blue  ),
+        two_separate_green   => |t| two_separate_cond(t, |c| c.color == CardColor::Green ),
+        two_separate_odds    => |t| two_separate_cond(t, |c| c.value.get() % 2 == 1      ),
 
-        two_barely_split_red     => |_| todo!("Mission not implemented: two_barely_split_red"),
-        two_barely_split_yellow  => |_| todo!("Mission not implemented: two_barely_split_yellow"),
-        two_barely_split_blue    => |_| todo!("Mission not implemented: two_barely_split_blue"),
-        two_barely_split_green   => |_| todo!("Mission not implemented: two_barely_split_green"),
+        two_barely_split_red     => |t| two_barely_split_cond(t, |c| c.color == CardColor::Red   ),
+        two_barely_split_yellow  => |t| two_barely_split_cond(t, |c| c.color == CardColor::Yellow),
+        two_barely_split_blue    => |t| two_barely_split_cond(t, |c| c.color == CardColor::Blue  ),
+        two_barely_split_green   => |t| two_barely_split_cond(t, |c| c.color == CardColor::Green ),
 
-        all_distinct_values            => |_| todo!("Mission not implemented: all_distinct_values"),
-        all_distinct_colors            => |_| todo!("Mission not implemented: all_distinct_colors"),
-        all_distinct_colors_and_values => |_| todo!("Mission not implemented: all_distinct_colors_and_values"),
+        all_distinct_values            => |t| all_distinct_bits(t, |c| c.value.as_bitmask()),
+        all_distinct_colors            => |t| all_distinct_bits(t, |c| c.color.as_bitmask()),
+        all_distinct_colors_and_values => |t| all_distinct_bits(t, |c| c.value.as_bitmask()) && all_distinct_bits(t, |c| c.color.as_bitmask()),
 
-        three_consecutive_ordered => |_| todo!("Mission not implemented: three_consecutive_ordered"),
-        four_consecutive          => |_| todo!("Mission not implemented: four_consecutive"),
+        three_consecutive_ordered => |t| fn_three_consecutive_ordered(t),
+        four_consecutive          => |t| fn_four_consecutive(t),
 
-        sum_yellow_equals_green => |_| todo!("Mission not implemented: sum_yellow_equals_green"),
-        sum_yellow_equals_red   => |_| todo!("Mission not implemented: sum_yellow_equals_red"),
-        sum_blue_equals_green   => |_| todo!("Mission not implemented: sum_blue_equals_green"),
-        sum_blue_equals_red     => |_| todo!("Mission not implemented: sum_blue_equals_red"),
+        sum_yellow_equals_green => |t| fn_col_sum(t, CardColor::Yellow) == fn_col_sum(t, CardColor::Green),
+        sum_yellow_equals_red   => |t| fn_col_sum(t, CardColor::Yellow) == fn_col_sum(t, CardColor::Red  ),
+        sum_blue_equals_green   => |t| fn_col_sum(t, CardColor::Blue  ) == fn_col_sum(t, CardColor::Green),
+        sum_blue_equals_red     => |t| fn_col_sum(t, CardColor::Blue  ) == fn_col_sum(t, CardColor::Red  ),
 
-        twice_sum_yellow_equals_green => |_| todo!("Mission not implemented: twice_sum_yellow_equals_green"),
-        twice_sum_yellow_equals_red   => |_| todo!("Mission not implemented: twice_sum_yellow_equals_red"),
-        twice_sum_blue_equals_green   => |_| todo!("Mission not implemented: twice_sum_blue_equals_green"),
-        twice_sum_blue_equals_red     => |_| todo!("Mission not implemented: twice_sum_blue_equals_red"),
+        twice_sum_yellow_equals_green => |t| 2u8 * fn_col_sum(t, CardColor::Yellow) == fn_col_sum(t, CardColor::Green),
+        twice_sum_yellow_equals_red   => |t| 2u8 * fn_col_sum(t, CardColor::Yellow) == fn_col_sum(t, CardColor::Red  ),
+        twice_sum_blue_equals_green   => |t| 2u8 * fn_col_sum(t, CardColor::Blue  ) == fn_col_sum(t, CardColor::Green),
+        twice_sum_blue_equals_red     => |t| 2u8 * fn_col_sum(t, CardColor::Blue  ) == fn_col_sum(t, CardColor::Red  ),
     }
 }
 
@@ -166,7 +227,6 @@ const ALL_CARDS: [Card; N_CARDS] = {
     cards
 };
 
-
 #[derive(PartialEq, Clone, Copy)]
 enum CardColor {
     Red,
@@ -176,6 +236,27 @@ enum CardColor {
 }
 
 type CardValue = NonZeroU8;
+
+trait _AsBitmask {
+    fn as_bitmask(self) -> u8;
+}
+
+impl _AsBitmask for CardColor {
+    fn as_bitmask(self) -> u8 {
+        match self {
+            CardColor::Red => 1u8,
+            CardColor::Green => 2u8,
+            CardColor::Yellow => 4u8,
+            CardColor::Blue => 8u8,
+        }
+    }
+}
+
+impl _AsBitmask for CardValue {
+    fn as_bitmask(self) -> u8 {
+        1u8 << (self.get() - 1)
+    }
+}
 
 #[derive(Clone, Copy)]
 struct Card {
@@ -316,6 +397,7 @@ impl common::State for State {
 
     fn apply_mut(&mut self, mv: &Self::Move) {
         let played_card = self.current_hand_mut().swap_remove(mv.idx_hand);
+        // careful: order needs to be preserved
         self.table_cards[mv.idx_table] = played_card;
 
         if let Some(drawn_card) = self.draw_card() {
@@ -342,11 +424,60 @@ impl common::State for State {
     }
 }
 
+fn print_state(state: &State) {
+    fn fmt_card(card: &Card) -> String {
+        let color = match card.color {
+            CardColor::Red => "Red  ",
+            CardColor::Green => "Green",
+            CardColor::Yellow => "Yellow",
+            CardColor::Blue => "Blue ",
+        };
+        format!("{}-{}", card.value.get(), color)
+    }
+
+    fn fmt_cards(cards: &[&Card]) -> String {
+        cards
+            .iter()
+            .map(|c| fmt_card(c))
+            .collect::<Vec<_>>()
+            .join(" | ")
+    }
+
+    let title = format!(" TURN {} ", state.turn);
+    let bar_width = std::cmp::max(40, title.len() + 10);
+    let bar = "═".repeat(bar_width);
+    println!("╔{}╗", bar);
+    println!("║{:^width$}║", title, width = bar_width);
+    println!("╚{}╝", bar);
+
+    println!("┌─ Player hands");
+    println!("│   Player 0 ( {} cards )", state.player_hands[0].len());
+    println!("│     {}", fmt_cards(&state.player_hands[0]));
+    println!("│   Player 1 ( {} cards )", state.player_hands[1].len());
+    println!("│     {}", fmt_cards(&state.player_hands[1]));
+    println!("└────────────────────────");
+
+    println!("┌─ Table cards ( {} cards )", state.table_cards.len());
+    println!("│     {}", fmt_cards(&state.table_cards));
+    println!("└────────────────────────");
+
+    println!("┌─ Table missions");
+    for mission in state.table_missions.iter() {
+        println!("│    - {}", mission.name);
+    }
+    println!("└────────────────────────");
+
+    println!("┌─ Decks");
+    println!("│   Cards   : {:3} remaining", state.deck_cards.len());
+    println!("│   Missions : {:3} remaining", state.deck_missions.len());
+    println!("└────────────────────────");
+}
+
 fn main() {
     let mut rng = fastrand::Rng::new(); // clock based seed
     // let mut rng = fastrand::Rng::with_seed(42);
 
     let initial_state = State::from_rng(&mut rng);
     let mut policy = common::policies::RandomPolicy::from_rng(rng);
-    common::run_simulation(initial_state, &mut policy);
+    common::run_simulation(initial_state, &mut policy, print_state);
 }
