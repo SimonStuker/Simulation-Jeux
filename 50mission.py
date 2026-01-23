@@ -182,7 +182,7 @@ Pioche_missions = [
     Mission(nom="2*Somme_Bleue==Somme_Verte", contrainte=meta_somme_couleurs_double("vers", "bleu")),
     Mission(nom="2*Somme_Rouge==Somme_Bleue", contrainte=meta_somme_couleurs_double("bleu", "rouge")),
 ]
-
+assert len(Pioche_missions) == 50, f"Le jeu doit comporter 50 missions et en comporte {len(Pioche_missions)}"
 
 # Création des cartes de jeu
 class Carte:
@@ -206,6 +206,7 @@ for i in range(1, 8):
     for j in ("rouge", "jaune", "bleu", "vert"):
         Pioche_cartes.append(Carte(i, j))
 Pioche_cartes = Pioche_cartes + Pioche_cartes
+assert len(Pioche_cartes) == 2*7*4, f"Le jeu doit comporter 2*7*4=56 cartes et en comporte {len(Pioche_cartes)}"
 # print("DEBUG",Pioche_cartes[4].valeurcarte,Pioche_cartes[4].couleurcarte)
 
 
