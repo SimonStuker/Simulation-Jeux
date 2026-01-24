@@ -336,6 +336,41 @@ def choisir_action(joueur, etat_jeu):
     assert len(coups) > 0, "ERREUR: Aucun coup possible: le jeu aurait du s'arreter"
     return random.choice(coups)
 
+    ##############################
+    ### Stratégie gloutonne : réaliser les plus de missions possibles en une carte
+    ##############################
+       # ##############################
+    # ### Stratégie gloutonne : réaliser les plus de missions possibles en une carte
+    # ##############################
+    # cartes_sur_table = etat_jeu["Cartes sur table"]
+    # main_joueur = etat_jeu[f"Main joueur {joueur}"]
+
+    # missions_max=0
+    # coups_optimaux=[]
+    # for x in coups:
+        
+    #     #Faire une projection si la carte est jouée
+    #     idx_main, idx_table = x         
+    #     carte_jouee = main_joueur[idx_main]  
+    #     projection = cartes_sur_table          
+    #     projection[idx_table] = carte_jouee
+
+    #     #Projeter le nombre de missions finissables
+    #     missions = etat_jeu["Missions sur table"]
+    #     missions_finissables = [m.check_fini(projection) for m in missions] ##Probleme avec check_fini ??
+    #     nombre_missions_finissable=missions_finissables.count(True)   
+        
+    #     #Choisir la mission qui finit le plus de missions possibles
+    #     if nombre_missions_finissable>missions_max:
+    #         missions_max=nombre_missions_finissable
+    #         coups_optimaux=[x]
+    #     else:
+    #         coups_optimaux.append(x)
+    # print("coups optimaux", coups_optimaux)
+    # print("missions max",missions_max)
+    # r=random.choice(coups_optimaux)
+    # print("coup choisi",r)
+    # return r
 
 # Résultat de l'action
 def appliquer_action(action, joueur, etat_jeu):
@@ -415,3 +450,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
