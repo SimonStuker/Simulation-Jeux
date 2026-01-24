@@ -1,0 +1,13 @@
+[package]
+name = "jeu_50missions"
+version = "0.1.0"
+edition = "2021"
+
+[[bin]]
+name = "50missions"
+path = "src/main.rs"
+
+[dependencies]
+fastrand="2"
+common = { path = "../common" }
+smallvec = "1.15.1"

@@ -1,0 +1,5 @@
+[workspace]
+members = [
+    "rust/jeu_50missions",
+    "rust/common",
+]
