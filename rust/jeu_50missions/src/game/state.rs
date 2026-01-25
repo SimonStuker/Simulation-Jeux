@@ -1,3 +1,4 @@
+use common::ScoredState;
 use smallvec::{SmallVec, smallvec};
 
 use crate::game::{card::{ALL_CARDS, Card, CardColor}, constants::*, missions::list::mission_deck_from_rng, setup::pop_n_iter, types::{DeckCards, DeckMissions, PlayerHand, TableCards, TableMissions}};
@@ -120,8 +121,10 @@ impl common::State for State {
         moves
     }
 
-    fn apply(&self, _mv: &Self::Move) -> Self {
-        todo!("Pure apply not implemented yet")
+    fn apply(&self, mv: &Self::Move) -> Self {
+        let mut new_state = self.clone();
+        new_state.apply_mut(mv);
+        new_state
     }
 
     fn apply_mut(&mut self, mv: &Self::Move) {
@@ -161,6 +164,12 @@ impl common::State for State {
 
         self.current_player = self.current_player.other();
         self.turn += 1;
+    }
+}
+
+impl ScoredState for State {
+    fn score(&self) -> i32 {
+        self.completed_missions as i32
     }
 }
 
@@ -209,8 +218,8 @@ impl State {
       println!("└────────────────────────");
 
       println!("┌─ Decks");
-      println!("│   Cards   : {:3} remaining", self.deck_cards.len());
-      println!("│   Missions : {:3} remaining", self.deck_missions.len());
+      println!("│   Cards     : {:3} remaining", self.deck_cards.len());
+      println!("│   Missions  : {:3} remaining {:3} completed{}", self.deck_missions.len(), self.completed_missions, if self.final_sprint { " (final sprint)" } else { "" });
       println!("└────────────────────────");
   }
 }
