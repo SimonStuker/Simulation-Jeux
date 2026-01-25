@@ -32,16 +32,16 @@ impl Player {
 
 #[derive(Clone)]
 pub struct State {
-    current_player: Player,
-    player_hands: [PlayerHand; 2],
-    table_cards: TableCards,
-    table_missions: TableMissions,
-    deck_cards: DeckCards,
-    deck_missions: DeckMissions,
-    turn: u32,
-    rng: fastrand::Rng,
-    final_sprint: bool,
-    completed_missions: u32,
+    pub current_player: Player,
+    pub player_hands: [PlayerHand; 2],
+    pub table_cards: TableCards,
+    pub table_missions: TableMissions,
+    pub deck_cards: DeckCards,
+    pub deck_missions: DeckMissions,
+    pub turn: u32,
+    pub rng: fastrand::Rng,
+    pub final_sprint: bool,
+    pub completed_missions: u32,
 }
 
 impl State {
