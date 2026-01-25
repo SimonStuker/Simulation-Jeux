@@ -23,7 +23,7 @@ fn main() {
     }
 
     else {
-        let mut policy = common::policies::MinMaxPolicy::from_depth(1);
+        let mut policy = common::policies::OptimisticPolicy::from_depth(3, 7);
         common::run_simulation(initial_state, &mut policy, move |s| {
             if !quiet {
                 s.print_state();
