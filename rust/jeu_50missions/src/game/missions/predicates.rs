@@ -1,6 +1,6 @@
 use crate::game::{card::{_AsBitmask, Card, CardColor}, constants::*, types::TableCards};
 
-pub fn two_separate_cond<F>(table_cards: &TableCards, fx_cond: F) -> bool
+pub fn fn_two_separate_cond<F>(table_cards: &TableCards, fx_cond: F) -> bool
 where
     F: Fn(&'static Card) -> bool
 {
@@ -12,7 +12,7 @@ where
     at_least_two && !two_adjacent
 }
 
-pub fn two_barely_split_cond<F>(table_cards: &TableCards, fx_cond: F) -> bool
+pub fn fn_two_barely_split_cond<F>(table_cards: &TableCards, fx_cond: F) -> bool
 where
     F: Fn(&'static Card) -> bool
 {
@@ -24,7 +24,7 @@ where
     exactly_two && two_are_barely_split
 }
 
-pub fn all_distinct_bits<F>(table_cards: &TableCards, fx_to_bitmask: F) -> bool
+pub fn fn_all_distinct_bits<F>(table_cards: &TableCards, fx_to_bitmask: F) -> bool
 where
     F: Fn(&'static Card) -> u8
 {
