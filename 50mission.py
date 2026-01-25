@@ -10,6 +10,7 @@ from copy import deepcopy
 N_CARTES_EN_MAIN = 4
 N_MISSIONS_SUR_TABLE = 4
 N_CARTES_SUR_TABLE = 4
+N_MISSIONS_ANANT_SPRINT_FINAL = 23
 DEBUG = True
 
 global Pioche_cartes, Pioche_missions
@@ -308,8 +309,8 @@ def jouer_un_tour(etat_jeu):
     nouvel_etat.joueur_actuel = (1 + nouvel_etat.tour) % 2
     nouvel_etat.tour += 1
 
-    # Si 25 missions ont été réalisées pour la premiere fois, mélange la défausse à la pioche et reprendre.
-    if len(nouvel_etat.pioche_missions)<=25 and not nouvel_etat.sprint_final:
+    # Si N_MISSIONS_ANANT_SPRINT_FINAL missions ont été réalisées pour la premiere fois, mélange la défausse à la pioche et reprendre.
+    if len(nouvel_etat.pioche_missions)<=50-N_MISSIONS_ANANT_SPRINT_FINAL and not nouvel_etat.sprint_final:
         print("SPRINT FINALLLLLLLLLLLLLLLLLLLLLLLLLLLL")   
         nouvel_etat.sprint_final=True
         #Mélanger la défausse et l'ajouter sous la pioche
@@ -436,9 +437,9 @@ def projeter(action, etat_jeu):
     assert len(missions_finies) + len(missions_restantes) == len(missions), "ERREUR: Bizarre le filtre des missions n'a pas bien fonctionne!"
 
 
-    etat_jeu.missions_sur_table = missions_restantes.copy()
+    # etat_jeu.missions_sur_table = missions_restantes.copy()
 
-    mise_a_jour_missions(etat_jeu)
+    # mise_a_jour_missions(etat_jeu)
 
 
 # Résultat de l'action
@@ -469,10 +470,12 @@ def appliquer_action(action, etat_jeu):
 def mise_a_jour_missions(etat_jeu):
     cartes_sur_table = etat_jeu.cartes_sur_table
     missions = etat_jeu.missions_sur_table
+    
     liste_fini = [m.check_fini(cartes_sur_table) for m in missions] # il ne faut appeler check_fini que une fois
     missions_finies = [m for (m, fini) in zip(missions, liste_fini) if fini]
     missions_restantes = [m for (m, fini) in zip(missions, liste_fini) if not fini]
-    # assert len(missions_finies) + len(missions_restantes) == len(missions), "ERREUR: Bizarre le filtre des missions n'a pas bien fonctionne!"
+    assert len(missions_finies) + len(missions_restantes) == len(missions), "ERREUR: Bizarre le filtre des missions n'a pas bien fonctionne!"
+
 
     if DEBUG:
         if len(missions_finies) > 0:
@@ -490,7 +493,8 @@ def mise_a_jour_missions(etat_jeu):
     pioche_missions = etat_jeu.pioche_missions
     while len(missions) < N_MISSIONS_SUR_TABLE and len(pioche_missions) > 0:
         nouvelle_mission = pioche_missions.pop()
-        missions.append(nouvelle_mission)
+        if not nouvelle_mission.check_fini(etat_jeu.cartes_sur_table):
+            missions.append(nouvelle_mission)
 
 def mise_a_jour_missions_initial(etat_jeu):
     cartes_sur_table = etat_jeu.cartes_sur_table
