@@ -2,7 +2,7 @@ use smallvec::{SmallVec, smallvec};
 
 use crate::game::{card::{ALL_CARDS, Card, CardColor}, constants::*, missions::list::ALL_MISSIONS, setup::pop_n_iter, types::{DeckCards, DeckMissions, PlayerHand, TableCards, TableMissions}};
 
-pub struct Mov {
+pub struct Move {
     idx_hand: usize,
     idx_table: usize,
 }
@@ -91,7 +91,7 @@ impl State {
 }
 
 impl common::State for State {
-    type Move = Mov;
+    type Move = Move;
     type Moves = SmallVec<[Self::Move; N_MAX_MOVES]>;
 
     fn is_terminal(&self) -> bool {
@@ -104,7 +104,7 @@ impl common::State for State {
         for (idx_hand, card_hand) in self.current_hand().iter().enumerate() {
             for (idx_table, card_table) in self.table_cards.iter().enumerate() {
                 if card_hand.color == card_table.color || card_hand.value == card_table.value {
-                    moves.push(Mov {
+                    moves.push(Move {
                         idx_hand,
                         idx_table,
                     });
