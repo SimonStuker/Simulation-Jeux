@@ -5,6 +5,7 @@
 
 # Librairies et variables globales
 import random
+from copy import deepcopy
 
 N_CARTES_EN_MAIN = 4
 N_MISSIONS_SUR_TABLE = 4
@@ -39,7 +40,6 @@ def meta_2_espacees(fx_condition, D):
             if fx_condition(carte1) and fx_condition(carte2):
                 return True
         return False
-
     return fx_contrainte
 
 
@@ -49,7 +49,6 @@ def meta_2_non_adjacents(fx_condition):
     Verifie si deux cartes a distance >1 verifient toutes les deux une condition
     """
     def fx_contrainte(cartes):
-        # SIMON: astuce on teste meta_2_espacees pour tout D!=1. ie D=2,3,...,N_CARTES_SUR_TABLE
         for D in range(2,N_CARTES_SUR_TABLE):
             # un peu complique: meta retourne une fonction, qu'il faut ensuite appeler sur les cartes sur table
             fx_test_distance_fixe = meta_2_espacees(fx_condition, D)
@@ -59,8 +58,6 @@ def meta_2_non_adjacents(fx_condition):
 
     return fx_contrainte
 
-# SIMON: si j'ai bien compris, la position des cartes n'est pas importante? dans ce cas felicitations c'est correct!
-# Je tente : les 4 cartes se suivent
 def meta_4_valeurs_se_suivent():
     def fx_contrainte(cartes):
         L = cartes
@@ -73,33 +70,23 @@ def meta_4_valeurs_se_suivent():
 
     return fx_contrainte
 
-
-# SIMON: vraiment pas loin ta tentative! je rends ca + generique
 # SIMON: pas vraiment besoin de meta fonction ici, on pourrait directement mettre Mission(nom="truc", contrainte=fx_3_valeurs_se_suivent)
 def meta_3_valeurs_se_suivent_dans_lordre():
     def fx_contrainte(cartes):
-        # SIMON: pas besoin de lire l'etat global: on te donne les cartes en input deja
-        # SIMON: une liste commence avec 0, pas 1 :p
         L = [x.valeurcarte for x in cartes]
         for idx in range(len(L) - 2):
             if (L[idx] == L[idx+1] + 1 and L[idx] == L[idx+2] + 2) or (L[idx] == L[idx+1] - 1 and L[idx] == L[idx+2] - 2):
                 return True
         return False
-
     return fx_contrainte
 
-
-# Je tente : deux couleurs ont la même somme de valeurs
 def meta_somme_couleurs_egale(couleur1, couleur2):
     def fx_contrainte(cartes):
         somme_couleur1 = sum(x.valeurcarte for x in cartes if x.couleurcarte == couleur1)
         somme_couleur2 = sum(x.valeurcarte for x in cartes if x.couleurcarte == couleur2)
         return somme_couleur1 == somme_couleur2
-
     return fx_contrainte
 
-
-# Je tente : une couleur1 a 2* la somme des valeurs d'une autre couleur2
 def meta_somme_couleurs_double(couleur1, couleur2):
     def fx_contrainte(cartes):
         somme_couleur1 = sum(x.valeurcarte for x in cartes if x.couleurcarte == couleur1)
@@ -230,10 +217,6 @@ class etat:
         self.defausse=defausse
         self.sprint_final=sprint_final
 
-    # def affiche_etat_jeu(self):
-    #     print(f"mainJ0: {self.mainJ0}, mainJ1: {self.mainJ1}, Couleur: {self.couleurcarte}")
-
-
 # Mise en place
 def initialiser_jeu():
     random.shuffle(Pioche_missions)
@@ -251,7 +234,6 @@ def initialiser_jeu():
              [],
              False,
     )
-
 
 
 # Boucle de jeu
@@ -274,7 +256,7 @@ def debug_tour(etat_jeu, action):
     pioche_missions = etat_jeu.pioche_missions
     mains = [
         etat_jeu.mainJ0,
-        etat_jeu.mainJ1,
+        etat_jeu.mainJ1
     ]
     
     title = f" TOUR {n_tour} "
@@ -312,23 +294,40 @@ def debug_tour(etat_jeu, action):
 
 # Tour de jeu
 def jouer_un_tour(etat_jeu):
+    """Retourne le nouvel état de jeu après un tour de jeu"""
+ 
     action =choisir_action(etat_jeu)
     
-    nouvel_etat=etat_jeu
+    nouvel_etat=deepcopy(etat_jeu)
     if DEBUG:
         debug_tour(nouvel_etat, action)
         
-    appliquer_action(action, nouvel_etat)
-    verifier_fin_jeu(nouvel_etat)
+    appliquer_action(action, nouvel_etat)       
+
     nouvel_etat.joueur_actuel = (1 + nouvel_etat.tour) % 2
     nouvel_etat.tour += 1
-    
+
     # Si 25 missions ont été réalisées pour la premiere fois, mélange la défausse à la pioche et reprendre.
-    if len(Pioche_missions)<25 and not nouvel_etat.sprint_final:
-        nouvel_etat.sprint=True
+    if len(nouvel_etat.pioche_missions)<=25 and not nouvel_etat.sprint_final:
+        print("SPRINT FINALLLLLLLLLLLLLLLLLLLLLLLLLLLL")
+        
+        
+        
+        nouvel_etat.sprint_final=True
+        #Mélanger la défausse et l'ajouter sous la pioche
         random.shuffle(nouvel_etat.defausse)
-        nouvel_etat.pioche_cartes =nouvel_etat.pioche+nouvel_etat.defausse
-    
+        nouvel_etat.pioche_cartes =nouvel_etat.pioche_cartes+nouvel_etat.defausse
+        nouvel_etat.defausse=[]    
+        #Les joueurs piochent jusqu'à avoir 4 cartes en main
+        while len(nouvel_etat.mainJ0)<N_CARTES_EN_MAIN:
+            carte_ajoutee=nouvel_etat.pioche_cartes.pop()
+            nouvel_etat.mainJ0.append(carte_ajoutee)
+        while len(nouvel_etat.mainJ1)<N_CARTES_EN_MAIN:
+            carte_ajoutee=nouvel_etat.pioche_cartes.pop()
+            nouvel_etat.mainJ1.append(carte_ajoutee)
+                    
+    verifier_fin_jeu(nouvel_etat)
+        
     return nouvel_etat
     
         
@@ -336,6 +335,7 @@ def jouer_un_tour(etat_jeu):
 # Coups possibles du joueur
 def coups_possibles(etat_jeu):
     joueur=etat_jeu.joueur_actuel
+    
     """
     Retourne une liste de tuples (idx_1, idx_2)
     idx_1: indice de la carte jouable dans la main du joueur
@@ -361,55 +361,95 @@ def coups_possibles(etat_jeu):
 
 # Choix d'une action
 def choisir_action(etat_jeu):
-    coups = coups_possibles(etat_jeu)
+    """Choix de l'action dans un état de jeu donné"""
     
-    print("DEBUG COUPS POSSIBLES ALORS",coups)
-    # Facon propre de s'assurer (assert) qu'on a au moins un coup
-    assert len(coups) > 0, "ERREUR: Aucun coup possible: le jeu aurait du s'arreter"
-
+    coups = coups_possibles(etat_jeu)
     # print("coups possibles",coups)
+
+
+    assert len(coups) > 0, "ERREUR: Aucun coup possible: le jeu aurait du s'arreter"
 
     # ##############################
     # ### Stratégie gloutonne : réaliser les plus de missions possibles en une carte
     # ##############################
-    # cartes_sur_table = etat_jeu["Cartes sur table"]
-    # main_joueur = etat_jeu[f"Main joueur {joueur}"]
 
-    # missions_max=0
-    # coups_optimaux=[]
-    # for x in coups:
+    missions_max=0
+    coups_optimaux=[]
         
-    #     #Faire une projection si la carte est jouée
-    #     idx_main, idx_table = x         
-    #     carte_jouee = main_joueur[idx_main]  
-    #     projection = cartes_sur_table          
-    #     projection[idx_table] = carte_jouee
+    #Faire une projection pour chaque action
+    
+    
+    for x in coups:
+        projection=deepcopy(etat_jeu)
+        projeter(x,projection)      
+        
 
-    #     #Projeter le nombre de missions finissables
-    #     missions = etat_jeu["Missions sur table"]
-    #     missions_finissables = [m.check_fini(projection) for m in missions] ##Probleme avec check_fini ??
-    #     nombre_missions_finissable=missions_finissables.count(True)   
+        #Projeter le nombre de missions finissables
+        missions = etat_jeu.missions_sur_table.copy()
+        missions_finissables = [m.check_fini(projection.cartes_sur_table) for m in missions]
+        nombre_missions_finissable=missions_finissables.count(True)          
+        # print("avec",x,"je realise",missions_finissables,"soit",nombre_missions_finissable,"missions")        
         
-    #     #Choisir la mission qui finit le plus de missions possibles
-    #     if nombre_missions_finissable>missions_max:
-    #         missions_max=nombre_missions_finissable
-    #         coups_optimaux=[x]
-    #     else:
-    #         coups_optimaux.append(x)
+        #Choisir la mission qui finit le plus de missions possibles
+        if nombre_missions_finissable==missions_max:
+            coups_optimaux.append(x)
+        if nombre_missions_finissable>missions_max:
+            missions_max=nombre_missions_finissable
+            coups_optimaux=[x]
     # print("coups optimaux", coups_optimaux)
     # print("missions max",missions_max)
-    # r=random.choice(coups_optimaux)
-    # print("coup choisi",r)
-    # return r
-    # Pour débug : joueur un coup au hasard parmi ceux possibles.
-    
-    r=random.choice(coups)
-    # print("coup choisi",r)
+    r=random.choice(coups_optimaux)
+    # print("coup choisi", r)
     return r
+
+    # # Pour débug : joueur un coup au hasard parmi ceux possibles.
+    
+    # r=random.choice(coups)
+    # return r
+
+# Projeter le résultat d'une action, similaire à appliquer_action
+def projeter(action, etat_jeu):
+    
+    """appliquer l'action (carte idx_main vers carte idx_table) dans un état de jeu donné"""
+
+    idx_main, idx_table = action
+    pioche = etat_jeu.pioche_cartes
+    joueur = etat_jeu.joueur_actuel
+    if joueur==0:
+        main_joueur = etat_jeu.mainJ0
+    if joueur==1:
+        main_joueur=etat_jeu.mainJ1 
+      
+    etat_jeu.defausse.append(idx_main) #Placer la carte dans la défausse
+    carte_jouee = main_joueur.pop(idx_main) # Enlever la carte de la main du joueur
+    if len(pioche) > 0:
+        nouvelle_carte = pioche.pop() # Enlever la carte de la pioche
+        main_joueur.append(nouvelle_carte)  # Ajouter la carte de piochee a la main du joueur
+
+    cartes_sur_table = etat_jeu.cartes_sur_table
+    cartes_sur_table[idx_table] = carte_jouee # Remplacer la carte sur table
+
+    missions = etat_jeu.missions_sur_table
+    liste_fini = [m.check_fini(cartes_sur_table) for m in missions] # il ne faut appeler check_fini que une fois
+    missions_finies = [m for (m, fini) in zip(missions, liste_fini) if fini]
+    missions_restantes = [m for (m, fini) in zip(missions, liste_fini) if not fini]
+    assert len(missions_finies) + len(missions_restantes) == len(missions), "ERREUR: Bizarre le filtre des missions n'a pas bien fonctionne!"
+
+
+    etat_jeu.missions_sur_table = missions_restantes.copy()
+
+    # Completer les missions sur table
+    missions = etat_jeu.missions_sur_table
+    pioche_missions = etat_jeu.pioche_missions
+    while len(missions) < N_MISSIONS_SUR_TABLE and len(pioche_missions) > 0:
+        nouvelle_mission = pioche_missions.pop()
+        missions.append(nouvelle_mission)
 
 
 # Résultat de l'action
 def appliquer_action(action, etat_jeu):
+    
+    """appliquer l'action (carte idx_main vers carte idx_table) dans un état de jeu donné"""
 
     idx_main, idx_table = action
     pioche = etat_jeu.pioche_cartes
@@ -455,24 +495,29 @@ def appliquer_action(action, etat_jeu):
 
 # Condition de victoire ou défaite et vérification de fin de jeu
 def condition_victoire(etat_jeu):
+    """Vérifie s'il reste des missions"""
     # SIMON: petit commentaire sur github
     return len(etat_jeu.pioche_missions) == 0
 
 
 def condition_defaite(etat_jeu):
+    """Vérifie s'il reste des coups possibles au prochain tour"""
     futurs_coups=coups_possibles(etat_jeu)
-    #Vérifier si le joueur suivant ne peut pas jouer. Dans ce cas c'est la défaite.
-    print("DEBUG FUTURS COUPS",futurs_coups)
     
     return len(futurs_coups)==0
 
 def verifier_fin_jeu(etat_jeu):
+    """Vérifie les conditions de victoire et de défaite"""
     etat_jeu.termine = condition_victoire(etat_jeu) or condition_defaite(etat_jeu)
 
 
 # Affichage du résultat
 def afficher_resultats(etat_jeu):
-    print("Partie terminée !")
+    print("Partie terminée")
+    if condition_victoire(etat_jeu):
+        print("Sur une VICTOIRE")
+    else:
+        print("Sur une DEFAITE")             
 
 
 # Boucle principale
