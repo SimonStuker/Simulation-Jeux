@@ -52,7 +52,7 @@ pub const ALL_CARD_VALUES: &[CardValue] = &[
     unsafe { CardValue::new_unchecked(7) },
 ];
 
-pub const ALL_CARDS: [Card; N_CARDS] = {
+const fn generate_all_cards() -> [Card; N_CARDS] {
     let mut cards = [Card{
         color: CardColor::Red,
         value: unsafe { CardValue::new_unchecked(1) },
@@ -60,10 +60,10 @@ pub const ALL_CARDS: [Card; N_CARDS] = {
 
     let mut idx_card: usize = 0;
     let mut idx_col = 0;
-    let mut idx_val = 0;
     while idx_col < N_COLORS {
         let col = ALL_CARD_COLORS[idx_col];
 
+        let mut idx_val = 0;
         while idx_val < N_VALUES {
             let val = ALL_CARD_VALUES[idx_val];
 
@@ -81,7 +81,9 @@ pub const ALL_CARDS: [Card; N_CARDS] = {
     }
 
     cards
-};
+}
+
+pub const ALL_CARDS: [Card; N_CARDS] = generate_all_cards();
 
 #[derive(Clone, Copy)]
 pub struct Card {
