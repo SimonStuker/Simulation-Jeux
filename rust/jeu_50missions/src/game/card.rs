@@ -1,4 +1,4 @@
-use std::num::NonZeroU8;
+use std::num::NonZeroI8;
 
 use crate::game::constants::{N_CARDS, N_COLORS, N_VALUES};
 
@@ -12,7 +12,7 @@ pub enum CardColor {
     Blue,
 }
 
-pub type CardValue = NonZeroU8;
+pub type CardValue = NonZeroI8;
 
 pub trait _AsBitmask {
     fn as_bitmask(self) -> u8;

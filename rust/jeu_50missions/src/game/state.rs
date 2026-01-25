@@ -1,6 +1,6 @@
 use smallvec::{SmallVec, smallvec};
 
-use crate::game::{card::{ALL_CARDS, Card, CardColor}, constants::*, missions::list::ALL_MISSIONS, setup::pop_n_iter, types::{DeckCards, DeckMissions, PlayerHand, TableCards, TableMissions}};
+use crate::game::{card::{ALL_CARDS, Card, CardColor}, constants::*, missions::list::{ALL_MISSIONS, mission_deck_from_rng}, setup::pop_n_iter, types::{DeckCards, DeckMissions, PlayerHand, TableCards, TableMissions}};
 
 pub struct Move {
     idx_hand: usize,
@@ -38,12 +38,14 @@ pub struct State {
     deck_cards: DeckCards,
     deck_missions: DeckMissions,
     turn: u32,
+    rng: fastrand::Rng,
+    final_sprint: bool,
+    completed_missions: u32,
 }
 
 impl State {
     pub fn from_rng(rng: &mut fastrand::Rng) -> Self {
-        let mut deck_missions: DeckMissions = ALL_MISSIONS.iter().collect();
-        rng.shuffle(&mut deck_missions);
+        let mut deck_missions: DeckMissions = mission_deck_from_rng(rng);
 
         let mut deck_cards: DeckCards = ALL_CARDS.iter().collect();
         rng.shuffle(&mut deck_cards);
@@ -65,6 +67,9 @@ impl State {
             table_missions,
             deck_cards,
             deck_missions,
+            rng: rng.clone(),
+            completed_missions: 0,
+            final_sprint: false,
             turn: 0,
         }
     }
@@ -133,14 +138,25 @@ impl common::State for State {
                 |mission| !mission.is_completed(&self.table_cards)
             );
 
-            let n_missing = N_TABLE_MISSIONS.saturating_sub(self.table_missions.len());
+            let n_completed = N_TABLE_MISSIONS.saturating_sub(self.table_missions.len());
 
-            if n_missing == 0 || self.deck_missions.is_empty() {
+            if n_completed == 0 || self.deck_missions.is_empty() {
                 break;
             }
 
-            let drawn = pop_n_iter(&mut self.deck_missions, n_missing);
+            self.completed_missions += n_completed as u32;
+
+            let drawn = pop_n_iter(&mut self.deck_missions, n_completed);
             self.table_missions.extend(drawn);
+        }
+
+        if !self.final_sprint && self.completed_missions >= N_RESHUFFLE_MISSIONS {
+            self.deck_missions = mission_deck_from_rng(&mut self.rng);
+            self.deck_missions.retain(|m| {
+              self.table_missions.iter().all(|tm| !std::ptr::eq(*tm, *m))
+            });
+            self.final_sprint = true;
+            assert!(self.deck_missions.len() + self.table_missions.len() == N_MISSIONS, "After reshuffle, total missions should still be 50");
         }
 
         self.current_player = self.current_player.other();

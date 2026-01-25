@@ -36,7 +36,7 @@ where
 }
 
 pub fn fn_three_consecutive_ordered(table_cards: &TableCards) -> bool {
-    let values: [u8; N_TABLE_CARDS] = std::array::from_fn(|i| table_cards[i].value.get());
+    let values: [i8; N_TABLE_CARDS] = std::array::from_fn(|i| table_cards[i].value.get());
     values.windows(3)
         .any(|w| matches!(
             w,
@@ -57,6 +57,6 @@ pub fn fn_four_consecutive(table_cards: &TableCards) -> bool {
     false
 }
 
-pub fn fn_col_sum(table_cards: &TableCards, col: CardColor) -> u8 {
+pub fn fn_col_sum(table_cards: &TableCards, col: CardColor) -> i8 {
     table_cards.iter().filter(|c| c.color == col).map(|c| c.value.get()).sum()
 }

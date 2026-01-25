@@ -7,6 +7,7 @@ pub const N_MISSIONS: usize = ALL_MISSIONS.len();
 pub const N_VALUES: usize = ALL_CARD_VALUES.len();
 pub const N_COLORS: usize = ALL_CARD_COLORS.len();
 pub const N_CARDS: usize = 2 * N_COLORS * N_VALUES;
+pub const N_RESHUFFLE_MISSIONS: u32 = 25;
 
 // smallvec is only implemented for some sizes
 pub const N_MAX_MISSIONS: usize = 64;
