@@ -238,3 +238,100 @@ impl State {
       println!("└────────────────────────");
   }
 }
+
+#[cfg(test)]
+mod tests {
+    use common::State;
+
+    use crate::game::missions::{Mission};
+    use crate::game::constants::*;
+
+    const TEST_SEED: u64 = 42;
+
+    pub const EASIEST_MISSION: Mission = Mission {
+        name: "easiest_mission",
+        constraint: |_| true,
+    };
+
+    pub const IMPOSSIBLE_MISSION: Mission = Mission {
+        name: "impossible_mission",
+        constraint: |_| false,
+    };
+
+    #[test]
+    fn state_initializes() {
+        let mut rng = fastrand::Rng::with_seed(42);
+        let state = crate::State::from_rng(&mut rng);
+
+        assert_eq!(state.player_hands[0].len(), N_HAND_CARDS);
+        assert_eq!(state.player_hands[1].len(), N_HAND_CARDS);
+        assert_eq!(state.table_cards.len(), N_TABLE_CARDS);
+        assert_eq!(state.table_missions.len(), N_TABLE_MISSIONS);
+        assert_eq!(state.deck_cards.len(), N_CARDS - 2 * N_HAND_CARDS - N_TABLE_CARDS);
+        assert_eq!(state.deck_missions.len(), N_MISSIONS - N_TABLE_MISSIONS);
+        assert_eq!(state.turn, 0);
+    }
+
+    #[test]
+    fn state_detects_victory() {
+        let mut rng = fastrand::Rng::with_seed(TEST_SEED);
+        let mut state = crate::State::from_rng(&mut rng);
+
+        assert_eq!(state.completed_missions, 0);
+        assert!(!state.is_victory());
+        assert!(!state.possible_moves().is_empty());
+
+        state.completed_missions = 49;
+        assert!(!state.is_victory());
+        assert!(!state.possible_moves().is_empty());
+
+        state.completed_missions = 50;
+        assert!(state.is_victory());
+        assert!(state.possible_moves().is_empty());
+    }
+
+    #[test]
+    fn state_detects_defeat_by_no_deck_left() {
+        let mut rng = fastrand::Rng::with_seed(TEST_SEED);
+        let mut state = crate::State::from_rng(&mut rng);
+
+        state.deck_cards.clear();
+        assert!(state.is_defeat());
+        assert!(state.possible_moves().is_empty());
+    }
+
+    #[test]
+    fn state_detects_defeat_by_no_moves_left() {
+        let mut rng = fastrand::Rng::with_seed(TEST_SEED);
+        let mut state = crate::State::from_rng(&mut rng);
+
+        state.deck_cards.clear();
+        assert!(state.is_defeat());
+        assert!(state.possible_moves().is_empty());
+    }
+
+    #[test]
+    fn state_detects_multiple_completed_missions() {
+        let mut rng = fastrand::Rng::with_seed(TEST_SEED);
+        let mut state = crate::State::from_rng(&mut rng);
+
+        let initial_completed = state.completed_missions;
+        let initial_deck_len = state.deck_missions.len();
+
+        assert_eq!(state.table_missions.len(), N_TABLE_MISSIONS);
+
+        // fill deck with impossible missions except for the top 5 easiest ones
+        const EXTRA_FROM_DECK: usize = 5;
+        state.table_missions.fill(&EASIEST_MISSION);
+        state.deck_missions.fill(&IMPOSSIBLE_MISSION);
+        state.deck_missions[(initial_deck_len - EXTRA_FROM_DECK)..].fill(&EASIEST_MISSION);
+
+        assert_eq!(state.completed_missions, initial_completed);
+        assert!(!state.final_sprint);
+
+        state.check_and_complete_missions();
+        state.check_and_apply_last_sprint();
+        assert_eq!(state.completed_missions, initial_completed + N_TABLE_MISSIONS as u32 + EXTRA_FROM_DECK as u32, "New missions should also be instantly completed");
+        assert!(state.table_missions.iter().all(|m| m.name() == IMPOSSIBLE_MISSION.name()), "All missions on the table should now be impossible missions");
+    }
+}
