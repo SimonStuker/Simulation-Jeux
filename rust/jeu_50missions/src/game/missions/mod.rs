@@ -1,6 +1,5 @@
 use crate::game::types::TableCards;
 
-#[derive(Clone)]
 pub struct Mission {
     pub name: &'static str,
     pub constraint: fn(&TableCards) -> bool,
