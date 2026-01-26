@@ -61,7 +61,7 @@ impl State {
         assert!(deck_cards.len() + player_hands[0].len() + player_hands[1].len() + table_cards.len() == N_CARDS);
         assert!(deck_missions.len() + table_missions.len() == N_MISSIONS);
 
-        State {
+        let mut new_state = State {
             current_player: Player::Player0,
             player_hands,
             table_cards,
@@ -72,7 +72,10 @@ impl State {
             completed_missions: 0,
             final_sprint: false,
             turn: 0,
-        }
+        };
+        new_state.check_and_complete_missions();
+        new_state.check_and_apply_last_sprint();
+        new_state
     }
 
     fn current_hand_mut(&mut self) -> &mut PlayerHand {
@@ -93,6 +96,41 @@ impl State {
 
     fn is_victory(&self) -> bool {
         self.deck_missions.is_empty() && self.table_missions.is_empty()
+    }
+
+    fn check_and_apply_last_sprint(&mut self) {
+        if !self.final_sprint && self.completed_missions >= N_RESHUFFLE_MISSIONS {
+            self.deck_missions = mission_deck_from_rng(&mut self.rng);
+            self.deck_missions.retain(|m| {
+              self.table_missions.iter().all(|tm| !std::ptr::eq(*tm, *m))
+            });
+            self.final_sprint = true;
+            assert!(self.deck_missions.len() + self.table_missions.len() == N_MISSIONS, "After reshuffle, total missions should still be 50");
+        }
+    }
+
+    /// Note: there is a known potential bug here if you complete more than N_RESHUFFLE_MISSIONS missions at once
+    /// This could cause you to go from non-final-sprint to no more missions in the deck, meaning you might have <4 missions on the table
+    /// but this is extremely unlikely to happen in practice
+    fn check_and_complete_missions(&mut self) {
+        loop {
+            self.table_missions.retain(
+                |mission| !mission.is_completed(&self.table_cards)
+            );
+
+            let n_completed = N_TABLE_MISSIONS.saturating_sub(self.table_missions.len());
+
+            if n_completed == 0 || self.deck_missions.is_empty() {
+                break;
+            }
+
+            self.completed_missions += n_completed as u32;
+
+            let drawn = pop_n_iter(&mut self.deck_missions, n_completed);
+            self.table_missions.extend(drawn);
+
+            self.check_and_apply_last_sprint();
+        }
     }
 }
 
@@ -136,31 +174,8 @@ impl common::State for State {
             self.current_hand_mut().push(drawn_card);
         }
 
-        loop {
-            self.table_missions.retain(
-                |mission| !mission.is_completed(&self.table_cards)
-            );
-
-            let n_completed = N_TABLE_MISSIONS.saturating_sub(self.table_missions.len());
-
-            if n_completed == 0 || self.deck_missions.is_empty() {
-                break;
-            }
-
-            self.completed_missions += n_completed as u32;
-
-            let drawn = pop_n_iter(&mut self.deck_missions, n_completed);
-            self.table_missions.extend(drawn);
-        }
-
-        if !self.final_sprint && self.completed_missions >= N_RESHUFFLE_MISSIONS {
-            self.deck_missions = mission_deck_from_rng(&mut self.rng);
-            self.deck_missions.retain(|m| {
-              self.table_missions.iter().all(|tm| !std::ptr::eq(*tm, *m))
-            });
-            self.final_sprint = true;
-            assert!(self.deck_missions.len() + self.table_missions.len() == N_MISSIONS, "After reshuffle, total missions should still be 50");
-        }
+        self.check_and_complete_missions();
+        self.check_and_apply_last_sprint();
 
         self.current_player = self.current_player.other();
         self.turn += 1;
