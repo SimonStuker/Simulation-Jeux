@@ -11,3 +11,4 @@ path = "src/main.rs"
 fastrand="2"
 common = { path = "../common" }
 smallvec = "1.15.1"
+indicatif = "0.18.3"
