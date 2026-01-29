@@ -11,6 +11,10 @@ pub trait State {
     fn apply_mut(&mut self, mv: &Self::Move);
 }
 
+pub trait ScoredState: State {
+    fn score(&self) -> i32;
+}
+
 pub trait Policy<S: State> {
     fn choose_move<'a>(&mut self, state: &S, moves: &'a [S::Move]) -> &'a S::Move;
 }
