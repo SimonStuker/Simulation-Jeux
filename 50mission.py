@@ -6,7 +6,6 @@
 # Librairies et variables globales
 import random
 from copy import deepcopy
-from dataclasses import dataclass
 
 N_CARTES_EN_MAIN = 4
 N_MISSIONS_SUR_TABLE = 4
@@ -26,7 +25,6 @@ class Mission:
     def check_fini(self, cartes_sur_table):
         return self.contrainte(cartes_sur_table)
 
-
 def meta_2_cartes_de_type(fx_condition):
     "Calcule le nombre de cartes vérifiant une condition"
     def fx_contrainte(cartes):
@@ -34,7 +32,6 @@ def meta_2_cartes_de_type(fx_condition):
         L.count(fx_condition)
         return L==2
     return fx_contrainte
-
 
 # SIMON: Les missions comme ca sont pas evidentes a coder, elles meritent d'avoir leur propre meta fonction pour pas perdre en lisibilite
 def meta_2_espacees(fx_condition, D):
@@ -104,9 +101,6 @@ def meta_somme_couleurs_double(couleur1, couleur2):
 fx_valeurs_distinctes = lambda cartes: len(set(x.valeurcarte for x in cartes)) == N_CARTES_SUR_TABLE
 fx_couleurs_distinctes = lambda cartes: len(set(x.couleurcarte for x in cartes)) == N_CARTES_SUR_TABLE
 
-
-
-
 # Création des cartes de jeu
 class Carte:
     valeurcarte = ""
@@ -120,7 +114,6 @@ class Carte:
         print(f"Valeur: {self.valeurcarte}, Couleur: {self.couleurcarte}")
 ##Affiche de la carte numéro 5
 # Pioche[5].affiche_carte()
-
 
 
 # Etat du jeu
@@ -245,11 +238,11 @@ def initialiser_jeu():
              False,
     )
 
-
 # Boucle de jeu
-def jouer_partie(etat_jeu):
-    while not etat_jeu.termine:
+def jouer_partie(etat_jeu): #BUG RARE ici : le jeu continue même avec aucun coup possible
+    while not etat_jeu.termine and len(coups_possibles(etat_jeu))>0:
         etat_jeu=jouer_un_tour(etat_jeu)
+    # print("FINI",etat_jeu.termine)
     return etat_jeu
 
 def debug_tour(etat_jeu, action):
@@ -302,14 +295,33 @@ def debug_tour(etat_jeu, action):
     print(f"│   Missions : {len(pioche_missions):3} restantes")
     print("└────────────────────────")
 
+def renouveler_main(etat_jeu):
+    #Les joueurs piochent jusqu'à avoir 4 cartes en main
+    while len(etat_jeu.mainJ0)<N_CARTES_EN_MAIN and len(etat_jeu.pioche_cartes)>0:
+        carte_ajoutee=etat_jeu.pioche_cartes.pop()
+        etat_jeu.mainJ0.append(carte_ajoutee)
+    while len(etat_jeu.mainJ1)<N_CARTES_EN_MAIN and len(etat_jeu.pioche_cartes)>0:
+        carte_ajoutee=etat_jeu.pioche_cartes.pop()
+        etat_jeu.mainJ1.append(carte_ajoutee)
+    
+def renouveler_missions(etat_jeu):
+    # Si N_MISSIONS_ANANT_SPRINT_FINAL missions ont été réalisées pour la premiere fois, mélange la défausse à la pioche et reprendre.
+    if len(etat_jeu.pioche_missions)<=50-N_MISSIONS_ANANT_SPRINT_FINAL and not etat_jeu.sprint_final:
+        if DEBUG:
+            print("SPRINT FINAL")   
+        etat_jeu.sprint_final=True
+        #Mélanger la défausse et l'ajouter sous la pioche
+        random.shuffle(etat_jeu.defausse)
+        etat_jeu.pioche_cartes =etat_jeu.pioche_cartes+etat_jeu.defausse
+        etat_jeu.defausse=[]
 
 # Tour de jeu
 def jouer_un_tour(etat_jeu):
     """Retourne le nouvel état de jeu après un tour de jeu"""
  
     action =choisir_action(etat_jeu)
-    
     nouvel_etat=deepcopy(etat_jeu)
+    
     if DEBUG:
         debug_tour(nouvel_etat, action)
         
@@ -318,27 +330,13 @@ def jouer_un_tour(etat_jeu):
     nouvel_etat.joueur_actuel = (1 + nouvel_etat.tour) % 2
     nouvel_etat.tour += 1
 
-    # Si N_MISSIONS_ANANT_SPRINT_FINAL missions ont été réalisées pour la premiere fois, mélange la défausse à la pioche et reprendre.
-    if len(nouvel_etat.pioche_missions)<=50-N_MISSIONS_ANANT_SPRINT_FINAL and not nouvel_etat.sprint_final:
-        if DEBUG:
-            print("SPRINT FINAL")   
-        nouvel_etat.sprint_final=True
-        #Mélanger la défausse et l'ajouter sous la pioche
-        random.shuffle(nouvel_etat.defausse)
-        nouvel_etat.pioche_cartes =nouvel_etat.pioche_cartes+nouvel_etat.defausse
-        nouvel_etat.defausse=[]    
-        #Les joueurs piochent jusqu'à avoir 4 cartes en main
-        while len(nouvel_etat.mainJ0)<N_CARTES_EN_MAIN:
-            carte_ajoutee=nouvel_etat.pioche_cartes.pop()
-            nouvel_etat.mainJ0.append(carte_ajoutee)
-        while len(nouvel_etat.mainJ1)<N_CARTES_EN_MAIN:
-            carte_ajoutee=nouvel_etat.pioche_cartes.pop()
-            nouvel_etat.mainJ1.append(carte_ajoutee)
-                    
+    renouveler_main(nouvel_etat)
+
+    renouveler_missions(nouvel_etat)
+    
     verifier_fin_jeu(nouvel_etat)
         
     return nouvel_etat
-    
         
 
 # Coups possibles du joueur
@@ -374,9 +372,15 @@ def choisir_action(etat_jeu):
     
     coups = coups_possibles(etat_jeu)
     # print("coups possibles",coups)
-
-
+    
     assert len(coups) > 0, "ERREUR: Aucun coup possible: le jeu aurait du s'arreter"
+
+    # ##############################
+    # ### Stratégie issue du policy iteration
+    # ##############################
+
+    
+# A FINIR
 
     # ##############################
     # ### Stratégie gloutonne : réaliser les plus de missions possibles en une carte
@@ -411,10 +415,14 @@ def choisir_action(etat_jeu):
     # print("coup choisi", r)
     return r
 
+
     # # Pour débug : joueur un coup au hasard parmi ceux possibles.
     
     # r=random.choice(coups)
     # return r
+
+
+
 
 # Projeter le résultat d'une action, similaire à appliquer_action
 def projeter(action, etat_jeu):
@@ -456,22 +464,23 @@ def appliquer_action(action, etat_jeu):
     
     """appliquer l'action (carte idx_main vers carte idx_table) dans un état de jeu donné"""
 
-    idx_main, idx_table = action
-    pioche = etat_jeu.pioche_cartes
-    joueur = etat_jeu.joueur_actuel
-    if joueur==0:
-        main_joueur = etat_jeu.mainJ0
-    if joueur==1:
-        main_joueur=etat_jeu.mainJ1 
-      
-    #Mettre les cartes de la table à jour
-    cartes_sur_table = etat_jeu.cartes_sur_table
-    etat_jeu.defausse.append(cartes_sur_table[idx_table]) #Placer la carte dans la défausse
-    carte_jouee = main_joueur.pop(idx_main) # Enlever la carte de la main du joueur
-    if len(pioche) > 0:
-        nouvelle_carte = pioche.pop() # Enlever la carte de la pioche
-        main_joueur.append(nouvelle_carte)  # Ajouter la carte de piochee a la main du joueur
-    cartes_sur_table[idx_table] = carte_jouee # Remplacer la carte sur table
+    if not action==[-1,-1]: ##Action ne rien faire
+        idx_main, idx_table = action
+        pioche = etat_jeu.pioche_cartes
+        joueur = etat_jeu.joueur_actuel
+        if joueur==0:
+            main_joueur = etat_jeu.mainJ0
+        if joueur==1:
+            main_joueur=etat_jeu.mainJ1 
+          
+        #Mettre les cartes de la table à jour
+        cartes_sur_table = etat_jeu.cartes_sur_table
+        etat_jeu.defausse.append(cartes_sur_table[idx_table]) #Placer la carte dans la défausse
+        carte_jouee = main_joueur.pop(idx_main) # Enlever la carte de la main du joueur
+        if len(pioche) > 0:
+            nouvelle_carte = pioche.pop() # Enlever la carte de la pioche
+            main_joueur.append(nouvelle_carte)  # Ajouter la carte de piochee a la main du joueur
+        cartes_sur_table[idx_table] = carte_jouee # Remplacer la carte sur table
 
     #Mettre les missions à jour
     mise_a_jour_missions(etat_jeu)
@@ -484,7 +493,6 @@ def mise_a_jour_missions(etat_jeu):
     missions_finies = [m for (m, fini) in zip(missions, liste_fini) if fini]
     missions_restantes = [m for (m, fini) in zip(missions, liste_fini) if not fini]
     assert len(missions_finies) + len(missions_restantes) == len(missions), "ERREUR: Bizarre le filtre des missions n'a pas bien fonctionne!"
-
 
     if DEBUG:
         if len(missions_finies) > 0:
@@ -532,8 +540,7 @@ def mise_a_jour_missions_initial(etat_jeu):
         nouvelle_mission = pioche_missions.pop()
         missions.append(nouvelle_mission)
 
-
-
+    
 
 # Condition de victoire ou défaite et vérification de fin de jeu
 def condition_victoire(etat_jeu):
@@ -544,13 +551,12 @@ def condition_victoire(etat_jeu):
 def condition_defaite(etat_jeu):
     """Vérifie s'il reste des coups possibles au prochain tour"""
     futurs_coups=coups_possibles(etat_jeu)
-    
+    # print("DEBUG",futurs_coups)
     return len(futurs_coups)==0
 
 def verifier_fin_jeu(etat_jeu):
     """Vérifie les conditions de victoire et de défaite"""
     etat_jeu.termine = condition_victoire(etat_jeu) or condition_defaite(etat_jeu)
-
 
 # Affichage du résultat
 def afficher_resultats(etat_jeu):
@@ -560,8 +566,8 @@ def afficher_resultats(etat_jeu):
         if DEBUG:
             print("Sur une VICTOIRE")
     else:
-            if DEBUG:
-                print("Sur une DEFAITE")             
+        if DEBUG:
+            print("Sur une DEFAITE")             
 
 # Boucle principale
 def main():
@@ -570,25 +576,107 @@ def main():
         print("= Mode DEBUG actif (DEBUG=True) =")
         print("=================================")
     
-    etat_initial=initialiser_jeu()
+    etat_initial=initialiser_jeu()    
     etat_jeu=deepcopy(etat_initial)
     mise_a_jour_missions_initial(etat_jeu)
     etat_final=jouer_partie(etat_jeu)
     afficher_resultats(etat_final)
-    return(50-len(etat_final.pioche_missions))
+    # return(len(etat_final.pioche_missions))
 
-    
-# if __name__ == "__main__":
-#     main()
-L=[]
-for k in range(100):
-    L.append(main())
-
-print(L)
-
+#STATISTIQUES
 # L=[]
-# for k in range(100):
+# for k in range(1000):
 #     L.append(main())
 # print(L)
 
+
+
+# ##############################
+# ### Calculs Policy Iteration 
+# ##############################
+def reward(etat_jeu,action): #Reward function : nombre de missions finissable avec l'action dans l'état
+    projection=deepcopy(etat_jeu)
+    projeter(action,projection)
+    
+    #Projeter le nombre de missions finissables
+    missions = etat_jeu.missions_sur_table.copy()
+    missions_finissables = [m.check_fini(projection.cartes_sur_table) for m in missions]
+    nombre_missions_finissable=missions_finissables.count(True) 
+    
+    return nombre_missions_finissable    
+
+def step(action, etat_jeu):
+    """encore une copie de appliquer_action et projeter, mais sous forme de fonction de transition"""
+
+    etat=deepcopy(etat_jeu)
+
+    if not action==[-1,-1]:
+    
+        idx_main, idx_table = action
+        pioche = etat.pioche_cartes
+        joueur = etat.joueur_actuel
+        if joueur==0:
+            main_joueur = etat.mainJ0
+        if joueur==1:
+            main_joueur=etat.mainJ1 
+            
+        cartes_sur_table = etat.cartes_sur_table
+          
+        etat.defausse.append(cartes_sur_table[idx_table]) #Placer la carte dans la défausse
+        carte_jouee = main_joueur.pop(idx_main) # Enlever la carte de la main du joueur
+        if len(pioche) > 0:
+            nouvelle_carte = pioche.pop() # Enlever la carte de la pioche
+            main_joueur.append(nouvelle_carte)  # Ajouter la carte de piochee a la main du joueur
+    
+        cartes_sur_table[idx_table] = carte_jouee # Remplacer la carte sur table
+    
+        mise_a_jour_missions(etat)
+
+    return etat
+
+def value(etat_jeu,iterations):
+    if iterations==0:
+        return 0
+    else:
+        etat=deepcopy(etat_jeu)
+        actions=coups_possibles(etat)
+        if len(actions)>0:
+            return max({reward(etat,a)+value(step(a,etat),iterations-1) for a in actions})
+        else:
+            return 0
+        
+# def value(etat_jeu):
+#     return 0
+
+# def policy(etat_jeu):
+#     coups=coups_possibles(etat_jeu)
+#     if len(coups)>0:
+#         return random.choice(coups)
+#     else:
+#         return [-1,-1]
+    
+# #EXECUTER POLICY ITERATION
+# NB_ITERATIONS=1
+
+
+# for k in range(NB_ITERATIONS): ##Nombre suffisant de fois, mettre boucle while à terme
+#     def new_value(etat_jeu):
+#         actions=coups_possibles(etat_jeu)
+#         return max({ reward(etat_jeu,action) + value( projeter(action, etat_jeu)) for action in actions})
+    
+#     print("TEST",value(initialiser_jeu()))
+
+#     def value(etat_jeu):
+#         return new_value(etat_jeu)
+    
+#     print("TEST",value(initialiser_jeu()))
+   
+#     # value=deepcopy(new_value)
+
+# ## IMPOSSIBLE DE REATTRIBUER LA FONCTION
+
+etat_initial=initialiser_jeu()
+print(value(etat_initial,10))
+
+ 
 
