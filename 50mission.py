@@ -379,41 +379,40 @@ def choisir_action(etat_jeu):
     # ### Stratégie issue du policy iteration
     # ##############################
 
-    
-# A FINIR
+    return policy(etat_jeu)
 
     # ##############################
     # ### Stratégie gloutonne : réaliser les plus de missions possibles en une carte
     # ##############################
 
-    missions_max=0
-    coups_optimaux=[]
+    # missions_max=0
+    # coups_optimaux=[]
         
-    #Faire une projection pour chaque action
+    # #Faire une projection pour chaque action
     
     
-    for x in coups:
-        projection=deepcopy(etat_jeu)
-        projeter(x,projection)      
+    # for x in coups:
+    #     projection=deepcopy(etat_jeu)
+    #     projeter(x,projection)      
         
 
-        #Projeter le nombre de missions finissables
-        missions = etat_jeu.missions_sur_table.copy()
-        missions_finissables = [m.check_fini(projection.cartes_sur_table) for m in missions]
-        nombre_missions_finissable=missions_finissables.count(True)          
-        # print("avec",x,"je realise",missions_finissables,"soit",nombre_missions_finissable,"missions")        
+    #     #Projeter le nombre de missions finissables
+    #     missions = etat_jeu.missions_sur_table.copy()
+    #     missions_finissables = [m.check_fini(projection.cartes_sur_table) for m in missions]
+    #     nombre_missions_finissable=missions_finissables.count(True)          
+    #     # print("avec",x,"je realise",missions_finissables,"soit",nombre_missions_finissable,"missions")        
         
-        #Choisir la mission qui finit le plus de missions possibles
-        if nombre_missions_finissable==missions_max:
-            coups_optimaux.append(x)
-        if nombre_missions_finissable>missions_max:
-            missions_max=nombre_missions_finissable
-            coups_optimaux=[x]
-    # print("coups optimaux", coups_optimaux)
-    # print("missions max",missions_max)
-    r=random.choice(coups_optimaux)
-    # print("coup choisi", r)
-    return r
+    #     #Choisir la mission qui finit le plus de missions possibles
+    #     if nombre_missions_finissable==missions_max:
+    #         coups_optimaux.append(x)
+    #     if nombre_missions_finissable>missions_max:
+    #         missions_max=nombre_missions_finissable
+    #         coups_optimaux=[x]
+    # # print("coups optimaux", coups_optimaux)
+    # # print("missions max",missions_max)
+    # r=random.choice(coups_optimaux)
+    # # print("coup choisi", r)
+    # return r
 
 
     # # Pour débug : joueur un coup au hasard parmi ceux possibles.
@@ -581,7 +580,7 @@ def main():
     mise_a_jour_missions_initial(etat_jeu)
     etat_final=jouer_partie(etat_jeu)
     afficher_resultats(etat_final)
-    # return(len(etat_final.pioche_missions))
+    # return(50-len(etat_final.pioche_missions)-etat_final.cartes_sur_table)
 
 #STATISTIQUES
 # L=[]
@@ -592,91 +591,98 @@ def main():
 
 
 # ##############################
-# ### Calculs Policy Iteration 
-# ##############################
-def reward(etat_jeu,action): #Reward function : nombre de missions finissable avec l'action dans l'état
-    projection=deepcopy(etat_jeu)
-    projeter(action,projection)
+# ### Calculs Value Iteration 
+# # ##############################
+# def reward(etat_jeu,action): #Reward function : nombre de missions finissable avec l'action dans l'état
+#     projection=deepcopy(etat_jeu)
+#     projeter(action,projection)
     
-    #Projeter le nombre de missions finissables
-    missions = etat_jeu.missions_sur_table.copy()
-    missions_finissables = [m.check_fini(projection.cartes_sur_table) for m in missions]
-    nombre_missions_finissable=missions_finissables.count(True) 
+#     #Projeter le nombre de missions finissables
+#     missions = etat_jeu.missions_sur_table.copy()
+#     missions_finissables = [m.check_fini(projection.cartes_sur_table) for m in missions]
+#     nombre_missions_finissable=missions_finissables.count(True) 
     
-    return nombre_missions_finissable    
+#     return nombre_missions_finissable    
 
-def step(action, etat_jeu):
-    """encore une copie de appliquer_action et projeter, mais sous forme de fonction de transition"""
+# def step(action, etat_jeu):
+#     """encore une copie de appliquer_action et projeter, mais sous forme de fonction de transition"""
 
-    etat=deepcopy(etat_jeu)
+#     etat=deepcopy(etat_jeu)
 
-    if not action==[-1,-1]:
+#     if not action==[-1,-1]:
     
-        idx_main, idx_table = action
-        pioche = etat.pioche_cartes
-        joueur = etat.joueur_actuel
-        if joueur==0:
-            main_joueur = etat.mainJ0
-        if joueur==1:
-            main_joueur=etat.mainJ1 
+#         idx_main, idx_table = action
+#         pioche = etat.pioche_cartes
+#         joueur = etat.joueur_actuel
+#         if joueur==0:
+#             main_joueur = etat.mainJ0
+#         if joueur==1:
+#             main_joueur=etat.mainJ1 
             
-        cartes_sur_table = etat.cartes_sur_table
+#         cartes_sur_table = etat.cartes_sur_table
           
-        etat.defausse.append(cartes_sur_table[idx_table]) #Placer la carte dans la défausse
-        carte_jouee = main_joueur.pop(idx_main) # Enlever la carte de la main du joueur
-        if len(pioche) > 0:
-            nouvelle_carte = pioche.pop() # Enlever la carte de la pioche
-            main_joueur.append(nouvelle_carte)  # Ajouter la carte de piochee a la main du joueur
+#         etat.defausse.append(cartes_sur_table[idx_table]) #Placer la carte dans la défausse
+#         carte_jouee = main_joueur.pop(idx_main) # Enlever la carte de la main du joueur
+#         if len(pioche) > 0:
+#             nouvelle_carte = pioche.pop() # Enlever la carte de la pioche
+#             main_joueur.append(nouvelle_carte)  # Ajouter la carte de piochee a la main du joueur
     
-        cartes_sur_table[idx_table] = carte_jouee # Remplacer la carte sur table
+#         cartes_sur_table[idx_table] = carte_jouee # Remplacer la carte sur table
     
-        mise_a_jour_missions(etat)
+#         mise_a_jour_missions(etat)
 
-    return etat
+#     return etat
 
-def value(etat_jeu,iterations):
-    if iterations==0:
-        return 0
-    else:
-        etat=deepcopy(etat_jeu)
-        actions=coups_possibles(etat)
-        if len(actions)>0:
-            return max({reward(etat,a)+value(step(a,etat),iterations-1) for a in actions})
-        else:
-            return 0
+# def value(etat_jeu,iterations):
+#     if iterations==0:
+#         return 0
+#     else:
+#         etat=deepcopy(etat_jeu)
+#         actions=coups_possibles(etat)
+#         if len(actions)>0:
+#             return max({reward(etat,a)+value(step(a,etat),iterations-1) for a in actions})
+#         else:
+#             return 0
         
-# def value(etat_jeu):
-#     return 0
+# etat_initial=initialiser_jeu()
+# print(value(etat_initial,10))
 
-# def policy(etat_jeu):
-#     coups=coups_possibles(etat_jeu)
+# ##############################
+# ### Calculs Policy Iteration 
+# # ##############################
+#
+# #
+# def reward(etat_jeu,action): #Reward function : nombre de missions finissable avec l'action dans l'état
+#     projection=deepcopy(etat_jeu)
+#     projeter(action,projection)
+#     #Projeter le nombre de missions finissables
+#     missions = etat_jeu.missions_sur_table.copy()
+#     missions_finissables = [m.check_fini(projection.cartes_sur_table) for m in missions]
+#     nombre_missions_finissable=missions_finissables.count(True) 
+    
+#     return nombre_missions_finissable 
+
+# def random_policy(etat_jeu):
+#     coups = coups_possibles(etat_jeu)
 #     if len(coups)>0:
-#         return random.choice(coups)
+#         r=random.choice(coups)
+#         return r
 #     else:
 #         return [-1,-1]
+
+# def evaluate_value(etat_jeu,policy_generic):
+#     def policy(etat_jeu):
+#         return policy_generic(etat_jeu)
+#     mise_a_jour_missions_initial(etat_jeu)
+#     etat_final=jouer_partie(etat_jeu)
+#     return (50-len(etat_final.pioche_missions)-etat_final.cartes_sur_table)
+
+# #Algorithme d'itération
+
+# etat_initial=initialiser_jeu()
+
+
     
-# #EXECUTER POLICY ITERATION
-# NB_ITERATIONS=1
 
 
-# for k in range(NB_ITERATIONS): ##Nombre suffisant de fois, mettre boucle while à terme
-#     def new_value(etat_jeu):
-#         actions=coups_possibles(etat_jeu)
-#         return max({ reward(etat_jeu,action) + value( projeter(action, etat_jeu)) for action in actions})
-    
-#     print("TEST",value(initialiser_jeu()))
-
-#     def value(etat_jeu):
-#         return new_value(etat_jeu)
-    
-#     print("TEST",value(initialiser_jeu()))
-   
-#     # value=deepcopy(new_value)
-
-# ## IMPOSSIBLE DE REATTRIBUER LA FONCTION
-
-etat_initial=initialiser_jeu()
-print(value(etat_initial,10))
-
- 
 
