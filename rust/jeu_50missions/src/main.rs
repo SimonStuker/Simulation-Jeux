@@ -1,3 +1,5 @@
+use std::path::PathBuf;
+
 use crate::game::{state::State};
 use indicatif::{ProgressIterator};
 
@@ -9,7 +11,7 @@ struct SimulationResult {
     final_state: State,
 }
 
-fn launch_single(quiet: bool, random: bool, seed: u64) -> SimulationResult {
+fn launch_single(verbose: bool, random: bool, seed: u64) -> SimulationResult {
     let mut rng = fastrand::Rng::with_seed(seed);
     let initial_state = State::from_rng(&mut rng);
 
@@ -17,7 +19,7 @@ fn launch_single(quiet: bool, random: bool, seed: u64) -> SimulationResult {
         if random {
             let mut policy = common::policies::RandomPolicy::from_rng(rng);
             common::run_simulation(initial_state.clone(), &mut policy, move |s| {
-                if !quiet {
+                if verbose {
                     s.print_state();
                 }
             })
@@ -26,7 +28,7 @@ fn launch_single(quiet: bool, random: bool, seed: u64) -> SimulationResult {
         else {
             let mut policy = common::policies::OptimisticPolicy::from_depth(3, 5);
             common::run_simulation(initial_state.clone(), &mut policy, move |s| {
-                if !quiet {
+                if verbose {
                     s.print_state();
                 }
             })
@@ -36,12 +38,12 @@ fn launch_single(quiet: bool, random: bool, seed: u64) -> SimulationResult {
     SimulationResult { seed, initial_state, final_state }
 }
 
-fn launch_batch(quiet: bool, random: bool, batch_size: usize, initial_seed: u64) -> Vec<SimulationResult> {
+fn launch_batch(verbose: bool, random: bool, batch_size: usize, initial_seed: u64) -> Vec<SimulationResult> {
     let mut results: Vec<SimulationResult> = Vec::new();
 
     for batch_idx in (0..batch_size).progress() {
         let seed = initial_seed.wrapping_add(batch_idx as u64);
-        results.push(launch_single(quiet, random, seed));
+        results.push(launch_single(verbose, random, seed));
     }
 
     results
@@ -55,9 +57,34 @@ fn get_quantile<T>(sorted_data: &[T], q: f64) -> &T {
     &sorted_data[idx]
 }
 
+fn write_results(_results: &[SimulationResult], _output_path: &PathBuf) {
+    todo!("Writing results to file is not implemented yet");
+}
+
+fn announce_results(results: &[SimulationResult], verbose: bool) {
+    let quantiles = [0.0, 0.1, 0.5, 0.9, 0.99, 1.0];
+    let res_quantiles: Vec<&SimulationResult> = quantiles.iter().map(|&q| get_quantile(&results, q)).collect();
+
+    for (batch_idx, sim_res) in results.iter().enumerate() {
+        println!("=== Game {} : {} completed missions", batch_idx + 1, sim_res.final_state.completed_missions);
+        if verbose {
+            println!("Seed: {}", sim_res.seed);
+            println!("Initial State:");
+            sim_res.initial_state.print_state();
+            println!("Final State:");
+            sim_res.final_state.print_state();
+        }
+    }
+
+    for (q, res) in quantiles.iter().zip(res_quantiles.iter()) {
+        println!("Quantile {:.2} seed: {:10}: {} completed missions", q, res.seed, res.final_state.completed_missions);
+    }
+
+}
+
 fn main() {
     // Parse command line arguments
-    let quiet = std::env::args().any(|arg| arg == "-q" || arg == "--quiet");
+    let verbose = std::env::args().any(|arg| arg == "-q" || arg == "--verbose");
     let random = std::env::args().any(|arg| arg == "-r" || arg == "--random");
     let batch_size = std::env::args().zip(std::env::args().skip(1))
         .find(|(arg, _)| arg == "-b" || arg == "--batch_size")
@@ -70,25 +97,16 @@ fn main() {
             let now = std::time::SystemTime::now();
             now.duration_since(std::time::UNIX_EPOCH).expect("Time went backwards").as_millis() as u64
         });
+    let output: Option<PathBuf> = std::env::args().zip(std::env::args().skip(1))
+        .find(|(arg, _)| arg == "-o" || arg == "--output")
+        .map(|(_, val)| PathBuf::from(val));
 
-    let mut results = launch_batch(quiet, random, batch_size, seed);
+    let mut results = launch_batch(verbose, random, batch_size, seed);
     results.sort_unstable_by_key(|res| res.final_state.completed_missions);
 
-    let quantiles = [0.0, 0.1, 0.5, 0.9, 0.99, 1.0];
-    let res_quantiles: Vec<&SimulationResult> = quantiles.iter().map(|&q| get_quantile(&results, q)).collect();
-
-    for (batch_idx, sim_res) in results.iter().enumerate() {
-        println!("=== Game {} : {} completed missions", batch_idx + 1, sim_res.final_state.completed_missions);
-        if !quiet {
-            println!("Seed: {}", sim_res.seed);
-            println!("Initial State:");
-            sim_res.initial_state.print_state();
-            println!("Final State:");
-            sim_res.final_state.print_state();
-        }
-    }
-
-    for (q, res) in quantiles.iter().zip(res_quantiles.iter()) {
-        println!("Quantile {:.2} seed: {:10}: {} completed missions", q, res.seed, res.final_state.completed_missions);
+    if output.is_some() {
+        write_results(&results, &output.unwrap());
+    } else {
+        announce_results(&results, verbose);
     }
 }
