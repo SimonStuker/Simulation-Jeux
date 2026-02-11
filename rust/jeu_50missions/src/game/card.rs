@@ -1,10 +1,11 @@
 use std::num::NonZeroI8;
+use serde::{Serialize, Deserialize, Serializer};
 
 use crate::game::constants::{N_CARDS, N_COLORS, N_VALUES};
 
 const _: () = assert!(ALL_CARDS.len() == 56); // 2*7*4 = 56
 
-#[derive(PartialEq, Clone, Copy)]
+#[derive(Serialize, Deserialize, PartialEq, Clone, Copy)]
 pub enum CardColor {
     Red,
     Green,
@@ -85,8 +86,18 @@ const fn generate_all_cards() -> [Card; N_CARDS] {
 
 pub const ALL_CARDS: [Card; N_CARDS] = generate_all_cards();
 
-#[derive(Clone, Copy)]
+#[derive(Serialize, Deserialize, Clone, Copy)]
 pub struct Card {
     pub color: CardColor,
     pub value: CardValue,
 }
+
+#[derive(Copy, Clone)]
+pub struct CardRef(pub &'static Card);
+
+impl Serialize for CardRef {
+    fn serialize<S: Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
+        self.0.serialize(s)
+    }
+}
+

@@ -1,14 +1,15 @@
 use common::ScoredState;
+use serde::{Deserialize, Serialize};
 use smallvec::{SmallVec, smallvec};
 
-use crate::game::{card::{ALL_CARDS, Card, CardColor}, constants::*, missions::list::mission_deck_from_rng, setup::pop_n_iter, types::{DeckCards, DeckMissions, PlayerHand, TableCards, TableMissions}};
+use crate::game::{card::{ALL_CARDS, CardColor, CardRef}, constants::*, missions::list::mission_deck_from_rng, setup::pop_n_iter, types::{DeckCards, DeckMissions, PlayerHand, TableCards, TableMissions}};
 
 pub struct Move {
     idx_hand: usize,
     idx_table: usize,
 }
 
-#[derive(Clone)]
+#[derive(Serialize, Deserialize, Clone)]
 pub enum Player {
     Player0,
     Player1,
@@ -31,6 +32,15 @@ impl Player {
 }
 
 #[derive(Clone)]
+pub struct StateRng(pub fastrand::Rng);
+
+impl Serialize for StateRng {
+    fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        self.0.get_seed().serialize(serializer)
+    }
+}
+
+#[derive(Serialize, Clone)]
 pub struct State {
     pub current_player: Player,
     pub player_hands: [PlayerHand; 2],
@@ -39,7 +49,7 @@ pub struct State {
     pub deck_cards: DeckCards,
     pub deck_missions: DeckMissions,
     pub turn: u32,
-    pub rng: fastrand::Rng,
+    pub rng: StateRng,
     pub final_sprint: bool,
     pub completed_missions: u32,
 }
@@ -48,7 +58,7 @@ impl State {
     pub fn from_rng(rng: &mut fastrand::Rng) -> Self {
         let mut deck_missions: DeckMissions = mission_deck_from_rng(rng);
 
-        let mut deck_cards: DeckCards = ALL_CARDS.iter().collect();
+        let mut deck_cards: DeckCards = ALL_CARDS.iter().map(|c| CardRef(c)).collect();
         rng.shuffle(&mut deck_cards);
 
         let player_hands: [PlayerHand; 2] = [
@@ -68,7 +78,7 @@ impl State {
             table_missions,
             deck_cards,
             deck_missions,
-            rng: rng.clone(),
+            rng: StateRng(rng.clone()),
             completed_missions: 0,
             final_sprint: false,
             turn: 0,
@@ -86,7 +96,7 @@ impl State {
         &self.player_hands[self.current_player.as_idx()]
     }
 
-    fn draw_card(&mut self) -> Option<&'static Card> {
+    fn draw_card(&mut self) -> Option<CardRef> {
         self.deck_cards.pop()
     }
 
@@ -100,9 +110,9 @@ impl State {
 
     fn check_and_apply_last_sprint(&mut self) {
         if !self.final_sprint && self.completed_missions >= N_RESHUFFLE_MISSIONS {
-            self.deck_missions = mission_deck_from_rng(&mut self.rng);
+            self.deck_missions = mission_deck_from_rng(&mut self.rng.0);
             self.deck_missions.retain(|m| {
-              self.table_missions.iter().all(|tm| !std::ptr::eq(*tm, *m))
+              self.table_missions.iter().all(|tm| !std::ptr::eq(tm.0, m.0))
             });
             self.final_sprint = true;
             assert!(self.deck_missions.len() + self.table_missions.len() == N_MISSIONS, "After reshuffle, total missions should still be 50");
@@ -115,7 +125,7 @@ impl State {
     fn check_and_complete_missions(&mut self) {
         loop {
             self.table_missions.retain(
-                |mission| !mission.is_completed(&self.table_cards)
+                |mission| !mission.0.is_completed(&self.table_cards)
             );
 
             let n_completed = N_TABLE_MISSIONS.saturating_sub(self.table_missions.len());
@@ -147,7 +157,7 @@ impl common::State for State {
 
         for (idx_hand, card_hand) in self.current_hand().iter().enumerate() {
             for (idx_table, card_table) in self.table_cards.iter().enumerate() {
-                if card_hand.color == card_table.color || card_hand.value == card_table.value {
+                if card_hand.0.color == card_table.0.color || card_hand.0.value == card_table.0.value {
                     moves.push(Move {
                         idx_hand,
                         idx_table,
@@ -190,17 +200,17 @@ impl ScoredState for State {
 
 impl State {
   pub fn print_state(self: &Self) {
-      fn fmt_card(card: &Card) -> String {
-          let color = match card.color {
+      fn fmt_card(card: &CardRef) -> String {
+          let color = match card.0.color {
               CardColor::Red => "Red  ",
               CardColor::Green => "Green",
               CardColor::Yellow => "Yellow",
               CardColor::Blue => "Blue ",
           };
-          format!("{}-{}", card.value.get(), color)
+          format!("{}-{}", card.0.value.get(), color)
       }
 
-      fn fmt_cards(cards: &[&Card]) -> String {
+      fn fmt_cards(cards: &[CardRef]) -> String {
           cards
               .iter()
               .map(|c| fmt_card(c))
@@ -228,7 +238,7 @@ impl State {
 
       println!("┌─ Table missions");
       for mission in self.table_missions.iter() {
-          println!("│    - {}", mission.name());
+          println!("│    - {}", mission.0.name());
       }
       println!("└────────────────────────");
 
