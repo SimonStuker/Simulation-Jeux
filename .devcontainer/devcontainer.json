@@ -1,0 +1,23 @@
+{
+  "name": "Rust + Jupyter Research",
+  "image": "mcr.microsoft.com/devcontainers/python:1-3.11",
+
+  "features": {
+    "ghcr.io/devcontainers/features/rust:1": {
+      "profile": "minimal"
+    }
+  },
+
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-python.python",
+        "ms-toolsai.jupyter",
+        "rust-lang.rust-analyzer"
+      ]
+    }
+  },
+
+  "postCreateCommand": "python -m pip install -U pip && pip install -r requirements.txt && cargo build --release",
+  "remoteUser": "vscode"
+}
