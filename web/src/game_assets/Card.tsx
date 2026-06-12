@@ -1,3 +1,4 @@
+import type { CSSProperties } from 'react';
 import styles from './Card.module.css';
 
 export type CardColor = 'Red' | 'Green' | 'Yellow' | 'Blue';
@@ -20,7 +21,7 @@ export function Card({ value, color, size = 'md' }: Props) {
   return (
     <div
       className={`${styles.card} ${styles[size]}`}
-      style={{ '--c': hex } as React.CSSProperties}
+      style={{ '--c': hex } as CSSProperties}
       title={`${color} ${value}`}
     >
       <span className={`${styles.corner} ${styles.topLeft}`}>{value}</span>

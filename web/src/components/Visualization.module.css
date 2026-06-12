@@ -18,22 +18,43 @@
   flex-direction: column;
   gap: 1.5rem;
   max-height: 90vh;
-  overflow: auto;
+  overflow: hidden;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+  min-width: 520px;
 }
+
+/* ── Header / tabs ────────────────────────────── */
 
 .header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 2rem;
+  flex-shrink: 0;
 }
 
-.title {
-  margin: 0;
-  font-size: 1.2rem;
-  font-weight: 700;
-  color: #e8e8f0;
+.tabs {
+  display: flex;
+  gap: 4px;
+}
+
+.tab {
+  background: none;
+  border: 1px solid #333;
+  border-radius: 6px;
+  color: #777;
+  cursor: pointer;
+  font-size: 0.875rem;
+  padding: 0.3rem 0.85rem;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.tab:hover { border-color: #555; color: #ccc; }
+
+.tabActive {
+  border-color: #555;
+  color: #e0e0f0;
+  background: #1c1c2e;
 }
 
 .closeBtn {
@@ -50,28 +71,28 @@
 
 .closeBtn:hover { border-color: #888; color: #fff; }
 
-/* ── Grid ────────────────────────────────────── */
+/* ── Cards tab ────────────────────────────────── */
 
 .grid {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
+  overflow: auto;
 }
 
 .colLabels {
   display: flex;
   align-items: center;
   gap: 0.6rem;
-  padding-left: 0;
 }
 
 .rowLabelSpacer {
-  width: 64px;  /* matches .rowLabel width */
+  width: 64px;
   flex-shrink: 0;
 }
 
 .colLabel {
-  width: 62px;  /* matches card md width */
+  width: 62px;
   text-align: center;
   font-size: 0.75rem;
   font-weight: 700;
@@ -98,3 +119,34 @@
 .rowLabel[data-color="Green"]  { color: #34d399; }
 .rowLabel[data-color="Yellow"] { color: #fbbf24; }
 .rowLabel[data-color="Blue"]   { color: #60a5fa; }
+
+/* ── Missions tab ─────────────────────────────── */
+
+.missionsScroll {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.family {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.familyLabel {
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #444;
+}
+
+.familyRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  align-items: flex-start;
+}
