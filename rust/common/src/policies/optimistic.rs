@@ -1,4 +1,5 @@
 use crate::{Policy, ScoredState};
+#[cfg(feature = "parallel")]
 use rayon::prelude::*;
 
 pub struct OptimisticPolicy {
@@ -30,6 +31,7 @@ fn get_max_score<S: ScoredState>(state: &S, depth: usize) -> i32 {
         .unwrap_or_else(|| state.score())
 }
 
+#[cfg(feature = "parallel")]
 fn par_get_max_score<S>(state: &S, depth: usize, parallel_depth: usize) -> i32
 where
     S: ScoredState + Sync,
@@ -57,16 +59,15 @@ where
     fn choose_move<'a>(&mut self, state: &S, moves: &'a [S::Move]) -> &'a S::Move {
         assert!(self.depth + self.parallel_depth > 0, "MinMaxPolicy requires total_depth >= 1");
 
-        if self.parallel_depth == 0 {
-            moves.iter().max_by_key(|mv| {
-                get_max_score(&state.apply(mv), self.depth - 1)
-            }).expect("choose_move expects to have at least one move")
+        #[cfg(feature = "parallel")]
+        if self.parallel_depth > 0 {
+            return moves.par_iter().max_by_key(|mv| {
+                par_get_max_score(&state.apply(mv), self.depth, self.parallel_depth - 1)
+            }).expect("choose_move expects to have at least one move");
         }
 
-        else {
-            moves.par_iter().max_by_key(|mv| {
-                par_get_max_score(&state.apply(mv), self.depth, self.parallel_depth - 1)
-            }).expect("choose_move expects to have at least one move")
-        }
+        moves.iter().max_by_key(|mv| {
+            get_max_score(&state.apply(mv), self.depth - 1)
+        }).expect("choose_move expects to have at least one move")
     }
 }

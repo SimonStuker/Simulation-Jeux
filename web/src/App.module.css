@@ -1,0 +1,39 @@
+.main {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1.5rem;
+  min-height: 100vh;
+  padding: 2rem;
+}
+
+.main h1 {
+  font-size: 2rem;
+  letter-spacing: 0.05em;
+}
+
+.btn {
+  padding: 0.75rem 2.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 8px;
+  background: #e94560;
+  color: #fff;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.btn:hover:not(:disabled) {
+  background: #c73652;
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.result {
+  font-size: 1.25rem;
+}

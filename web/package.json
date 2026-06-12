@@ -1,0 +1,24 @@
+{
+  "name": "jeu-50missions-web",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "wasm": "cd ../rust/jeu_50missions && wasm-pack build --target web --out-dir ../../web/pkg --dev && rm -f ../../web/pkg/.gitignore",
+    "wasm:release": "cd ../rust/jeu_50missions && wasm-pack build --target web --out-dir ../../web/pkg --release && rm -f ../../web/pkg/.gitignore",
+    "dev": "vite",
+    "build": "npm run wasm:release && tsc -b && vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.1",
+    "@types/react-dom": "^18.3.1",
+    "@vitejs/plugin-react": "^4.3.1",
+    "typescript": "^5.5.3",
+    "vite": "^5.4.0"
+  }
+}
