@@ -4,13 +4,14 @@ import wasmUrl from '../pkg/jeu_50missions_bg.wasm?url';
 import type { SimResult, RunConfig } from './types';
 import { SimControls } from './components/SimControls';
 import { ResultsPanel } from './components/ResultsPanel';
+import { Visualization } from './components/Visualization';
 import styles from './App.module.css';
 
 export default function App() {
-  const [ready, setReady] = useState(false);
-  const [running, setRunning] = useState(false);
-  const [results, setResults] = useState<SimResult[] | null>(null);
-  const [toast, setToast] = useState<string | null>(null);
+  const [ready, setReady]         = useState(false);
+  const [running, setRunning]     = useState(false);
+  const [results, setResults]     = useState<SimResult[] | null>(null);
+  const [vizResult, setVizResult] = useState<SimResult | null>(null);
 
   useEffect(() => {
     init(wasmUrl).then(() => setReady(true));
@@ -19,17 +20,11 @@ export default function App() {
   const handleRun = useCallback((config: RunConfig) => {
     setRunning(true);
     setResults(null);
-    // yield to React so the "Running…" state renders before we block the thread
     setTimeout(() => {
       const raw = run_batch_wasm(config.batch_size, config.seed, config.strategy === 'random', config.seq_depth) as SimResult[];
       setResults(raw);
       setRunning(false);
     }, 0);
-  }, []);
-
-  const showToast = useCallback((msg: string) => {
-    setToast(msg);
-    setTimeout(() => setToast(null), 2500);
   }, []);
 
   return (
@@ -45,11 +40,13 @@ export default function App() {
         <ResultsPanel
           results={results}
           running={running}
-          onVisualize={() => showToast('Under construction 🚧')}
+          onVisualize={setVizResult}
         />
       )}
 
-      {toast && <div className={styles.toast}>{toast}</div>}
+      {vizResult && (
+        <Visualization result={vizResult} onClose={() => setVizResult(null)} />
+      )}
     </div>
   );
 }
