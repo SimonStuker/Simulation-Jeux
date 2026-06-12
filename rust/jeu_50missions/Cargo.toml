@@ -28,4 +28,5 @@ bincode = "1"
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 common = { path = "../common", default-features = false }
 wasm-bindgen = "0.2"
+serde-wasm-bindgen = "0.6"
 console_error_panic_hook = "0.1"

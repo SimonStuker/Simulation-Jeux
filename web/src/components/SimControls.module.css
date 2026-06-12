@@ -1,0 +1,118 @@
+.form {
+  display: flex;
+  align-items: flex-end;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.groups {
+  display: flex;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+  flex: 1;
+}
+
+.group {
+  border: 1px solid #333;
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  min-width: 200px;
+}
+
+.group legend {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 0 0.25rem;
+}
+
+.radio {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  font-size: 0.95rem;
+}
+
+.field {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  color: #ccc;
+}
+
+.field > span:first-child {
+  min-width: 80px;
+}
+
+.numInput {
+  width: 64px;
+  background: #1e1e2e;
+  border: 1px solid #444;
+  border-radius: 4px;
+  color: inherit;
+  padding: 0.25rem 0.4rem;
+  font-size: 0.9rem;
+  text-align: right;
+}
+
+.seedInput {
+  width: 120px;
+  background: #1e1e2e;
+  border: 1px solid #444;
+  border-radius: 4px;
+  color: inherit;
+  padding: 0.25rem 0.4rem;
+  font-size: 0.9rem;
+  font-family: monospace;
+}
+
+.iconBtn {
+  background: none;
+  border: 1px solid #444;
+  border-radius: 4px;
+  color: #aaa;
+  cursor: pointer;
+  padding: 0.2rem 0.4rem;
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.iconBtn:hover {
+  color: #fff;
+  border-color: #777;
+}
+
+.warn {
+  font-size: 0.75rem;
+  color: #f0a040;
+}
+
+.runBtn {
+  padding: 0.6rem 2rem;
+  font-size: 1rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 8px;
+  background: #e94560;
+  color: #fff;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s;
+  height: fit-content;
+}
+
+.runBtn:hover:not(:disabled) {
+  background: #c73652;
+}
+
+.runBtn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}

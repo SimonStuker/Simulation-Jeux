@@ -1,34 +1,55 @@
-import { useState, useEffect } from 'react';
-import init, { run_simulation_wasm } from '../pkg/jeu_50missions.js';
+import { useState, useEffect, useCallback } from 'react';
+import init, { run_batch_wasm } from '../pkg/jeu_50missions.js';
 import wasmUrl from '../pkg/jeu_50missions_bg.wasm?url';
+import type { SimResult, RunConfig } from './types';
+import { SimControls } from './components/SimControls';
+import { ResultsPanel } from './components/ResultsPanel';
 import styles from './App.module.css';
 
-function App() {
+export default function App() {
   const [ready, setReady] = useState(false);
-  const [result, setResult] = useState<number | null>(null);
+  const [running, setRunning] = useState(false);
+  const [results, setResults] = useState<SimResult[] | null>(null);
+  const [toast, setToast] = useState<string | null>(null);
 
   useEffect(() => {
     init(wasmUrl).then(() => setReady(true));
   }, []);
 
-  const handleRun = () => {
-    const seed = Date.now() >>> 0; // truncate to u32
-    setResult(run_simulation_wasm(seed));
-  };
+  const handleRun = useCallback((config: RunConfig) => {
+    setRunning(true);
+    setResults(null);
+    // yield to React so the "Running…" state renders before we block the thread
+    setTimeout(() => {
+      const raw = run_batch_wasm(config.batch_size, config.seed, config.strategy === 'random', config.seq_depth) as SimResult[];
+      setResults(raw);
+      setRunning(false);
+    }, 0);
+  }, []);
+
+  const showToast = useCallback((msg: string) => {
+    setToast(msg);
+    setTimeout(() => setToast(null), 2500);
+  }, []);
 
   return (
-    <main className={styles.main}>
-      <h1>50 Missions</h1>
-      <button className={styles.btn} onClick={handleRun} disabled={!ready}>
-        {ready ? 'Run Simulation' : 'Loading…'}
-      </button>
-      {result !== null && (
-        <p className={styles.result}>
-          Completed missions: <strong>{result}</strong>
-        </p>
+    <div className={styles.layout}>
+      <header className={styles.header}>
+        <h1>50 Missions</h1>
+        <p className={styles.subtitle}>Game simulation</p>
+      </header>
+
+      <SimControls ready={ready} running={running} onRun={handleRun} />
+
+      {(running || results) && (
+        <ResultsPanel
+          results={results}
+          running={running}
+          onVisualize={() => showToast('Under construction 🚧')}
+        />
       )}
-    </main>
+
+      {toast && <div className={styles.toast}>{toast}</div>}
+    </div>
   );
 }
-
-export default App;

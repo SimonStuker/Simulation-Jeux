@@ -1,7 +1,7 @@
 /* tslint:disable */
 /* eslint-disable */
 
-export function run_simulation_wasm(seed: number): number;
+export function run_batch_wasm(batch_size: number, initial_seed: number, random: boolean, seq_depth: number): any;
 
 export function start(): void;
 
@@ -9,11 +9,11 @@ export type InitInput = RequestInfo | URL | Response | BufferSource | WebAssembl
 
 export interface InitOutput {
     readonly memory: WebAssembly.Memory;
-    readonly run_simulation_wasm: (a: number) => number;
+    readonly run_batch_wasm: (a: number, b: number, c: number, d: number) => any;
     readonly start: () => void;
-    readonly __wbindgen_free: (a: number, b: number, c: number) => void;
     readonly __wbindgen_malloc: (a: number, b: number) => number;
     readonly __wbindgen_realloc: (a: number, b: number, c: number, d: number) => number;
+    readonly __wbindgen_free: (a: number, b: number, c: number) => void;
     readonly __wbindgen_externrefs: WebAssembly.Table;
     readonly __wbindgen_start: () => void;
 }
