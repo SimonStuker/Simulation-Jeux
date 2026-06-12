@@ -8,10 +8,11 @@ import { Visualization } from './components/Visualization';
 import styles from './App.module.css';
 
 export default function App() {
-  const [ready, setReady]         = useState(false);
-  const [running, setRunning]     = useState(false);
-  const [results, setResults]     = useState<SimResult[] | null>(null);
-  const [vizResult, setVizResult] = useState<SimResult | null>(null);
+  const [ready, setReady]     = useState(false);
+  const [running, setRunning] = useState(false);
+  const [results, setResults] = useState<SimResult[] | null>(null);
+  const [showViz, setShowViz] = useState(false);
+  const [toast, setToast]     = useState<string | null>(null);
 
   useEffect(() => {
     init(wasmUrl).then(() => setReady(true));
@@ -27,11 +28,19 @@ export default function App() {
     }, 0);
   }, []);
 
+  const showToast = useCallback((msg: string) => {
+    setToast(msg);
+    setTimeout(() => setToast(null), 2500);
+  }, []);
+
   return (
     <div className={styles.layout}>
       <header className={styles.header}>
         <h1>50 Missions</h1>
         <p className={styles.subtitle}>Game simulation</p>
+        <button className={styles.vizMenuBtn} onClick={() => setShowViz(true)}>
+          Cards &amp; Missions
+        </button>
       </header>
 
       <SimControls ready={ready} running={running} onRun={handleRun} />
@@ -40,13 +49,13 @@ export default function App() {
         <ResultsPanel
           results={results}
           running={running}
-          onVisualize={setVizResult}
+          onVisualize={() => showToast('Under construction 🚧')}
         />
       )}
 
-      {vizResult && (
-        <Visualization result={vizResult} onClose={() => setVizResult(null)} />
-      )}
+      {showViz && <Visualization onClose={() => setShowViz(false)} />}
+
+      {toast && <div className={styles.toast}>{toast}</div>}
     </div>
   );
 }

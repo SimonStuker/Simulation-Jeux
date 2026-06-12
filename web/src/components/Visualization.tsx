@@ -10,7 +10,7 @@ const VALUES = [1, 2, 3, 4, 5, 6, 7];
 type Tab = 'cards' | 'missions';
 
 interface Props {
-  result: SimResult;
+  result?: SimResult;
   onClose: () => void;
 }
 
