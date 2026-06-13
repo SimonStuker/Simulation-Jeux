@@ -50,6 +50,7 @@ pub struct State {
     pub deck_cards: DeckCards,
     pub deck_missions: DeckMissions,
     pub turn: u32,
+    #[serde(skip)]
     pub rng: StateRng,
     pub final_sprint: bool,
     pub completed_missions: u32,

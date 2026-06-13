@@ -44,19 +44,20 @@ pub fn launch_single(verbose: bool, random: bool, seed: u64, par_depth: usize, s
 }
 
 #[cfg_attr(not(target_arch = "wasm32"), allow(dead_code))]
-pub fn launch_single_trace(random: bool, seed: u64, par_depth: usize, seq_depth: usize) -> SimulationTrace {
+pub fn launch_single_trace(verbose: bool, random: bool, seed: u64, par_depth: usize, seq_depth: usize) -> SimulationTrace {
     let mut rng = fastrand::Rng::with_seed(seed as u64);
     let initial_state = crate::game::state::State::from_rng(&mut rng);
 
     let mut state_list = Vec::new();
     let mut move_list = Vec::new();
 
-    state_list.push(initial_state.clone());
-
     if random {
         let mut policy = common::policies::RandomPolicy::from_rng(rng);
 
         common::run_simulation(initial_state, &mut policy, |state, maybe_mov| {
+            if verbose {
+                state.print_state();
+            }
             state_list.push(state.clone());
             if let Some(mov) = maybe_mov {
                 move_list.push(mov.clone());
@@ -66,6 +67,9 @@ pub fn launch_single_trace(random: bool, seed: u64, par_depth: usize, seq_depth:
         let mut policy = common::policies::OptimisticPolicy::from_depth(par_depth, seq_depth.max(1) as usize);
 
         common::run_simulation(initial_state, &mut policy, |state, maybe_mov| {
+            if verbose {
+                state.print_state();
+            }
             state_list.push(state.clone());
             if let Some(mov) = maybe_mov {
                 move_list.push(mov.clone());
