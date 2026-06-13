@@ -88,14 +88,14 @@ export function ResultsPanel({ results, running, onVisualize }: Props) {
     };
   }, [sorted, results]);
 
-  if (running || !results) return <div className={styles.loading}>Running…</div>;
+  if (!results) return <div className={styles.loading}>Running…</div>;
 
   return (
     <section className={styles.panel}>
       {stats && (
         <div className={styles.stats}>
           <Stat
-            label="Games"
+            label={running ? 'Games…' : 'Games'}
             value={stats.n < stats.total ? `${stats.n} / ${stats.total}` : stats.n}
           />
           <Stat label="Victories"    value={`${stats.victories} (${stats.winPct}%)`} highlight={stats.winPct > 50} />

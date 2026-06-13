@@ -17,10 +17,11 @@ export function SimControls({ ready, running, onRun }: Props) {
   const [seqDepth, setSeqDepth] = useState(3);
   const [batchSize, setBatchSize] = useState(20);
   const [seed, setSeed] = useState(randomSeed);
+  const [trace, setTrace] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onRun({ strategy, seq_depth: seqDepth, batch_size: batchSize, seed });
+    onRun({ strategy, seq_depth: seqDepth, batch_size: batchSize, seed, trace });
   };
 
   return (
@@ -59,14 +60,16 @@ export function SimControls({ ready, running, onRun }: Props) {
 
         <fieldset className={styles.group}>
           <legend>Parameters</legend>
-          <label className={styles.field}>
-            <span>Batch size</span>
-            <input
-              type="number" min={1} max={1000} value={batchSize}
-              onChange={e => setBatchSize(Number(e.target.value))}
-              className={styles.numInput}
-            />
-          </label>
+          {!trace && (
+            <label className={styles.field}>
+              <span>Batch size</span>
+              <input
+                type="number" min={1} max={1000} value={batchSize}
+                onChange={e => setBatchSize(Number(e.target.value))}
+                className={styles.numInput}
+              />
+            </label>
+          )}
           <label className={styles.field}>
             <span>Seed</span>
             <input
@@ -80,6 +83,14 @@ export function SimControls({ ready, running, onRun }: Props) {
               title="Randomize seed"
               onClick={() => setSeed(randomSeed())}
             >↺</button>
+          </label>
+          <label className={styles.radio}>
+            <input
+              type="checkbox"
+              checked={trace}
+              onChange={e => setTrace(e.target.checked)}
+            />
+            Trace mode
           </label>
         </fieldset>
       </div>
