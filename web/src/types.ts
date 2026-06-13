@@ -38,7 +38,7 @@ export interface GameState {
 }
 
 export interface SimTrace {
-  seed: bigint;
+  seed: number;
   state_list: GameState[];
   move_list: SimMove[];
 }

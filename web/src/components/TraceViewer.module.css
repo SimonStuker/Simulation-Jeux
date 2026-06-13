@@ -106,6 +106,9 @@
 }
 
 .sectionLabel {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
   font-size: 0.72rem;
   font-weight: 700;
   text-transform: uppercase;
@@ -148,7 +151,24 @@
 
 /* ── Table ───────────────────────────────────── */
 
-.tableSection {}
+.tableSection {
+  background: #16162a;
+  border: 1px solid #32324e;
+  border-radius: 8px;
+  padding: 1rem 1.25rem;
+}
+
+.tableSection .sectionLabel {
+  color: #7070a0;
+  justify-content: center;
+}
+
+.cardRowCentered {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  justify-content: center;
+}
 
 .cardSlot {}
 
@@ -169,20 +189,10 @@
 
 .missionsSection {}
 
-.missionNames {
+.missionCards {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.4rem;
-}
-
-.missionName {
-  font-size: 0.75rem;
-  background: #1c1c2e;
-  border: 1px solid #2e2e44;
-  border-radius: 4px;
-  padding: 0.2rem 0.5rem;
-  color: #aaa;
-  font-family: monospace;
+  gap: 0.5rem;
 }
 
 /* ── Footer ──────────────────────────────────── */

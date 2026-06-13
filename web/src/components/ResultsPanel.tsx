@@ -12,6 +12,7 @@ type OutcomeFilter = 'all' | 'victory' | 'defeat';
 interface Props {
   results: SimResult[] | null;
   running: boolean;
+  tracedSeeds: Record<number, unknown>;
   onVisualize: (result: SimResult) => void;
 }
 
@@ -20,7 +21,7 @@ function SortIcon({ col, sortBy, dir }: { col: SortKey; sortBy: SortKey; dir: So
   return <span className={styles.sortActive}>{dir === 'asc' ? '↑' : '↓'}</span>;
 }
 
-export function ResultsPanel({ results, running, onVisualize }: Props) {
+export function ResultsPanel({ results, running, tracedSeeds, onVisualize }: Props) {
   const [sortBy, setSortBy]                   = useState<SortKey>('completed_missions');
   const [sortDir, setSortDir]                 = useState<SortDir>('asc');
   const [filterOutcome, setFilterOutcome]     = useState<OutcomeFilter>('all');
@@ -188,8 +189,11 @@ export function ResultsPanel({ results, running, onVisualize }: Props) {
                   </td>
                   <td className={styles.colTurns}>{r.turns}</td>
                   <td className={styles.colAction}>
-                    <button className={styles.vizBtn} onClick={() => onVisualize(r)}>
-                      Visualize
+                    <button
+                      className={`${styles.vizBtn} ${r.seed in tracedSeeds ? styles.vizBtnCached : ''}`}
+                      onClick={() => onVisualize(r)}
+                    >
+                      {r.seed in tracedSeeds ? '↺ Replay' : 'Trace'}
                     </button>
                   </td>
                 </tr>

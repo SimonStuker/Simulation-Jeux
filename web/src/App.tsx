@@ -15,6 +15,7 @@ export default function App() {
   const [running, setRunning]     = useState(false);
   const [results, setResults]     = useState<SimResult[] | null>(null);
   const [trace, setTrace]         = useState<SimTrace | null>(null);
+  const [traceCache, setTraceCache] = useState<Record<number, SimTrace>>({});
   const [lastConfig, setLastConfig] = useState<RunConfig | null>(null);
   const [showViz, setShowViz]     = useState(false);
   const [toast, setToast]         = useState<string | null>(null);
@@ -32,17 +33,24 @@ export default function App() {
     setRunning(true);
     setLastConfig(config);
     setTrace(null);
+    setTraceCache({});
 
     if (config.trace) {
       setResults(null);
       setTimeout(() => {
-        const t = launch_single_trace(
-          config.strategy === 'random',
-          BigInt(config.seed),
-          config.seq_depth,
-        ) as SimTrace;
-        setTrace(t);
-        setRunning(false);
+        try {
+          const t = launch_single_trace(
+            config.strategy === 'random',
+            BigInt(config.seed),
+            config.seq_depth,
+          ) as SimTrace;
+          setTrace(t);
+          setTraceCache({ [config.seed]: t });
+        } catch (err) {
+          showToast(`Trace failed: ${err}`);
+        } finally {
+          setRunning(false);
+        }
       }, 0);
       return;
     }
@@ -72,21 +80,33 @@ export default function App() {
     };
 
     setTimeout(runChunk, 0);
-  }, []);
+  }, [showToast]);
 
   const handleVisualize = useCallback((result: SimResult) => {
     if (!lastConfig) { showToast('Run a simulation first'); return; }
+
+    if (traceCache[result.seed]) {
+      setTrace(traceCache[result.seed]);
+      return;
+    }
+
     setRunning(true);
     setTimeout(() => {
-      const t = launch_single_trace(
-        lastConfig.strategy === 'random',
-        BigInt(result.seed),
-        lastConfig.seq_depth,
-      ) as SimTrace;
-      setTrace(t);
-      setRunning(false);
+      try {
+        const t = launch_single_trace(
+          lastConfig.strategy === 'random',
+          BigInt(result.seed),
+          lastConfig.seq_depth,
+        ) as SimTrace;
+        setTrace(t);
+        setTraceCache(prev => ({ ...prev, [result.seed]: t }));
+      } catch (err) {
+        showToast(`Trace failed: ${err}`);
+      } finally {
+        setRunning(false);
+      }
     }, 0);
-  }, [lastConfig, showToast]);
+  }, [lastConfig, traceCache, showToast]);
 
   return (
     <div className={styles.layout}>
@@ -104,6 +124,7 @@ export default function App() {
         <ResultsPanel
           results={results}
           running={running}
+          tracedSeeds={traceCache}
           onVisualize={handleVisualize}
         />
       )}

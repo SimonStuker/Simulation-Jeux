@@ -253,6 +253,9 @@
 
 .vizBtn:hover { border-color: #888; color: #fff; }
 
+.vizBtnCached { border-color: #3a5a3a; color: #6abf6a; }
+.vizBtnCached:hover { border-color: #6abf6a; color: #9de89d; }
+
 /* ── Empty state ────────────────────────────────── */
 
 .emptyRow {
