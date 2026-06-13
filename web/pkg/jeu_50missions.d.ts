@@ -1,7 +1,9 @@
 /* tslint:disable */
 /* eslint-disable */
 
-export function run_batch_wasm(batch_size: number, initial_seed: number, random: boolean, seq_depth: number): any;
+export function launch_single(random: boolean, seed: bigint, seq_depth: number): any;
+
+export function launch_single_trace(random: boolean, seed: bigint, seq_depth: number): any;
 
 export function start(): void;
 
@@ -9,7 +11,8 @@ export type InitInput = RequestInfo | URL | Response | BufferSource | WebAssembl
 
 export interface InitOutput {
     readonly memory: WebAssembly.Memory;
-    readonly run_batch_wasm: (a: number, b: number, c: number, d: number) => any;
+    readonly launch_single: (a: number, b: bigint, c: number) => any;
+    readonly launch_single_trace: (a: number, b: bigint, c: number) => any;
     readonly start: () => void;
     readonly __wbindgen_malloc: (a: number, b: number) => number;
     readonly __wbindgen_realloc: (a: number, b: number, c: number, d: number) => number;

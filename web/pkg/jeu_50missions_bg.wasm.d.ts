@@ -1,7 +1,8 @@
 /* tslint:disable */
 /* eslint-disable */
 export const memory: WebAssembly.Memory;
-export const run_batch_wasm: (a: number, b: number, c: number, d: number) => any;
+export const launch_single: (a: number, b: bigint, c: number) => any;
+export const launch_single_trace: (a: number, b: bigint, c: number) => any;
 export const start: () => void;
 export const __wbindgen_malloc: (a: number, b: number) => number;
 export const __wbindgen_realloc: (a: number, b: number, c: number, d: number) => number;

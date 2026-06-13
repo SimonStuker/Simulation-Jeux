@@ -1,16 +1,12 @@
 mod game;
 
-#[cfg(not(target_arch = "wasm32"))]
 mod simulation;
-#[cfg(not(target_arch = "wasm32"))]
 mod dumper;
 
-#[cfg(not(target_arch = "wasm32"))]
 use std::path::PathBuf;
-#[cfg(not(target_arch = "wasm32"))]
-use crate::{dumper::write_results, simulation::{SimulationResult, launch_batch}};
+use indicatif::{ProgressIterator};
+use crate::{dumper::write_results, simulation::{SimulationResult, launch_single}};
 
-#[cfg(not(target_arch = "wasm32"))]
 fn get_quantile<T>(sorted_data: &[T], q: f64) -> &T {
     assert!(!sorted_data.is_empty());
     assert!((0.0..=1.0).contains(&q));
@@ -18,7 +14,17 @@ fn get_quantile<T>(sorted_data: &[T], q: f64) -> &T {
     &sorted_data[idx]
 }
 
-#[cfg(not(target_arch = "wasm32"))]
+pub fn launch_batch(verbose: bool, random: bool, batch_size: usize, initial_seed: u64, par_depth: usize, seq_depth: usize) -> Vec<SimulationResult> {
+    let mut results: Vec<SimulationResult> = Vec::new();
+
+    for batch_idx in (0..batch_size).progress() {
+        let seed = initial_seed.wrapping_add(batch_idx as u64);
+        results.push(launch_single(verbose, random, seed, par_depth, seq_depth));
+    }
+
+    results
+}
+
 fn announce_results(results: &[SimulationResult], verbose: bool) {
     let quantiles = [0.0, 0.1, 0.5, 0.9, 0.99, 1.0];
     let res_quantiles: Vec<&SimulationResult> = quantiles.iter().map(|&q| get_quantile(&results, q)).collect();
@@ -41,12 +47,6 @@ fn announce_results(results: &[SimulationResult], verbose: bool) {
 }
 
 fn main() {
-    #[cfg(not(target_arch = "wasm32"))]
-    native_main();
-}
-
-#[cfg(not(target_arch = "wasm32"))]
-fn native_main() {
     let verbose = std::env::args().any(|arg| arg == "-q" || arg == "--verbose");
     let random = std::env::args().any(|arg| arg == "-r" || arg == "--random");
     let batch_size = std::env::args().zip(std::env::args().skip(1))

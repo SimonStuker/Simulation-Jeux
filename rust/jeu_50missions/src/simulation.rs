@@ -1,5 +1,4 @@
-use crate::game::{state::State};
-use indicatif::{ProgressIterator};
+use crate::game::state::{Move, State};
 use serde::{Serialize};
 
 
@@ -10,6 +9,13 @@ pub struct SimulationResult {
     pub final_state: State,
 }
 
+#[derive(Serialize, Clone)]
+pub struct SimulationTrace {
+    pub seed: u64,
+    pub state_list: Vec<State>,
+    pub move_list: Vec<Move>,
+}
+
 pub fn launch_single(verbose: bool, random: bool, seed: u64, par_depth: usize, seq_depth: usize) -> SimulationResult {
     let mut rng = fastrand::Rng::with_seed(seed);
     let initial_state = State::from_rng(&mut rng);
@@ -17,7 +23,7 @@ pub fn launch_single(verbose: bool, random: bool, seed: u64, par_depth: usize, s
     let final_state = {
         if random {
             let mut policy = common::policies::RandomPolicy::from_rng(rng);
-            common::run_simulation(initial_state.clone(), &mut policy, move |s| {
+            common::run_simulation(initial_state.clone(), &mut policy, move |s, _m| {
                 if verbose {
                     s.print_state();
                 }
@@ -26,7 +32,7 @@ pub fn launch_single(verbose: bool, random: bool, seed: u64, par_depth: usize, s
 
         else {
             let mut policy = common::policies::OptimisticPolicy::from_depth(par_depth, seq_depth);
-            common::run_simulation(initial_state.clone(), &mut policy, move |s| {
+            common::run_simulation(initial_state.clone(), &mut policy, move |s, _m| {
                 if verbose {
                     s.print_state();
                 }
@@ -37,15 +43,35 @@ pub fn launch_single(verbose: bool, random: bool, seed: u64, par_depth: usize, s
     SimulationResult { seed, initial_state, final_state }
 }
 
-pub fn launch_batch(verbose: bool, random: bool, batch_size: usize, initial_seed: u64, par_depth: usize, seq_depth: usize) -> Vec<SimulationResult> {
-    let mut results: Vec<SimulationResult> = Vec::new();
+#[cfg_attr(not(target_arch = "wasm32"), allow(dead_code))]
+pub fn launch_single_trace(random: bool, seed: u64, par_depth: usize, seq_depth: usize) -> SimulationTrace {
+    let mut rng = fastrand::Rng::with_seed(seed as u64);
+    let initial_state = crate::game::state::State::from_rng(&mut rng);
 
-    for batch_idx in (0..batch_size).progress() {
-        let seed = initial_seed.wrapping_add(batch_idx as u64);
-        results.push(launch_single(verbose, random, seed, par_depth, seq_depth));
-    }
+    let mut state_list = Vec::new();
+    let mut move_list = Vec::new();
 
-    results
+    state_list.push(initial_state.clone());
+
+    if random {
+        let mut policy = common::policies::RandomPolicy::from_rng(rng);
+
+        common::run_simulation(initial_state, &mut policy, |state, maybe_mov| {
+            state_list.push(state.clone());
+            if let Some(mov) = maybe_mov {
+                move_list.push(mov.clone());
+            }
+        })
+    } else {
+        let mut policy = common::policies::OptimisticPolicy::from_depth(par_depth, seq_depth.max(1) as usize);
+
+        common::run_simulation(initial_state, &mut policy, |state, maybe_mov| {
+            state_list.push(state.clone());
+            if let Some(mov) = maybe_mov {
+                move_list.push(mov.clone());
+            }
+        })
+    };
+
+    return SimulationTrace { seed, state_list, move_list };
 }
-
-

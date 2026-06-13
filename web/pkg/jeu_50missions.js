@@ -3,18 +3,30 @@
 //#region exports
 
 /**
- * @param {number} batch_size
- * @param {number} initial_seed
  * @param {boolean} random
+ * @param {bigint} seed
  * @param {number} seq_depth
  * @returns {any}
  */
-export function run_batch_wasm(batch_size, initial_seed, random, seq_depth) {
-    _assertNum(batch_size);
-    _assertNum(initial_seed);
+export function launch_single(random, seed, seq_depth) {
     _assertBoolean(random);
+    _assertBigInt(seed);
     _assertNum(seq_depth);
-    const ret = wasm.run_batch_wasm(batch_size, initial_seed, random, seq_depth);
+    const ret = wasm.launch_single(random, seed, seq_depth);
+    return ret;
+}
+
+/**
+ * @param {boolean} random
+ * @param {bigint} seed
+ * @param {number} seq_depth
+ * @returns {any}
+ */
+export function launch_single_trace(random, seed, seq_depth) {
+    _assertBoolean(random);
+    _assertBigInt(seed);
+    _assertNum(seq_depth);
+    const ret = wasm.launch_single_trace(random, seed, seq_depth);
     return ret;
 }
 
@@ -29,6 +41,10 @@ export function start() {
 function __wbg_get_imports() {
     const import0 = {
         __proto__: null,
+        __wbg_Error_8c4e43fe74559d73: function() { return logError(function (arg0, arg1) {
+            const ret = Error(getStringFromWasm0(arg0, arg1));
+            return ret;
+        }, arguments); },
         __wbg___wbindgen_debug_string_0bc8482c6e3508ae: function(arg0, arg1) {
             const ret = debugString(arg1);
             const ptr1 = passStringToWasm0(ret, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
@@ -85,6 +101,11 @@ function __wbg_get_imports() {
             const ret = getStringFromWasm0(arg0, arg1);
             return ret;
         }, arguments); },
+        __wbindgen_cast_0000000000000003: function() { return logError(function (arg0) {
+            // Cast intrinsic for `U64 -> Externref`.
+            const ret = BigInt.asUintN(64, arg0);
+            return ret;
+        }, arguments); },
         __wbindgen_init_externref_table: function() {
             const table = wasm.__wbindgen_externrefs;
             const offset = table.grow(4);
@@ -105,6 +126,10 @@ function __wbg_get_imports() {
 //#endregion
 
 //#region intrinsics
+function _assertBigInt(n) {
+    if (typeof(n) !== 'bigint') throw new Error(`expected a bigint argument, found ${typeof(n)}`);
+}
+
 function _assertBoolean(n) {
     if (typeof(n) !== 'boolean') {
         throw new Error(`expected a boolean argument, found ${typeof(n)}`);

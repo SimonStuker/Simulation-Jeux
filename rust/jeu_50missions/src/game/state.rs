@@ -4,6 +4,7 @@ use smallvec::{SmallVec, smallvec};
 
 use crate::game::{card::{CardColor, CardRef}, constants::*, missions::list::mission_deck_from_rng, setup::pop_n_iter, types::{DeckCards, DeckMissions, PlayerHand, TableCards, TableMissions}};
 
+#[derive(Serialize, Deserialize, Clone)]
 pub struct Move {
     idx_hand: usize,
     idx_table: usize,
