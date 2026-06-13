@@ -49,7 +49,7 @@ export function SimControls({ ready, running, onRun }: Props) {
             <label className={styles.field}>
               <span>Search depth</span>
               <input
-                type="number" min={1} max={6} value={seqDepth}
+                type="number" min={1} max={20} value={seqDepth}
                 onChange={e => setSeqDepth(Number(e.target.value))}
                 className={styles.numInput}
               />
