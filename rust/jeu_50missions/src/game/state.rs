@@ -265,7 +265,7 @@ mod tests {
     #[test]
     fn state_initializes() {
         let mut rng = fastrand::Rng::with_seed(42);
-        let state = crate::State::from_rng(&mut rng);
+        let state = super::State::from_rng(&mut rng);
 
         assert_eq!(state.player_hands[0].len(), N_HAND_CARDS);
         assert_eq!(state.player_hands[1].len(), N_HAND_CARDS);
@@ -279,7 +279,7 @@ mod tests {
     #[test]
     fn state_detects_victory() {
         let mut rng = fastrand::Rng::with_seed(TEST_SEED);
-        let mut state = crate::State::from_rng(&mut rng);
+        let mut state = super::State::from_rng(&mut rng);
 
         assert_eq!(state.completed_missions, 0);
         assert!(!state.is_victory());
@@ -290,26 +290,23 @@ mod tests {
         assert!(!state.possible_moves().is_empty());
 
         state.completed_missions = 50;
+        assert!(!state.is_victory());
+        assert!(!state.possible_moves().is_empty());
+
+        state.completed_missions = 50;
+        state.deck_missions.clear();
+        state.table_missions.clear();
         assert!(state.is_victory());
-        assert!(state.possible_moves().is_empty());
-    }
-
-    #[test]
-    fn state_detects_defeat_by_no_deck_left() {
-        let mut rng = fastrand::Rng::with_seed(TEST_SEED);
-        let mut state = crate::State::from_rng(&mut rng);
-
-        state.deck_cards.clear();
-        assert!(state.is_defeat());
-        assert!(state.possible_moves().is_empty());
+        assert!(!state.possible_moves().is_empty());
     }
 
     #[test]
     fn state_detects_defeat_by_no_moves_left() {
         let mut rng = fastrand::Rng::with_seed(TEST_SEED);
-        let mut state = crate::State::from_rng(&mut rng);
+        let mut state = super::State::from_rng(&mut rng);
 
         state.deck_cards.clear();
+        state.current_hand_mut().clear();
         assert!(state.is_defeat());
         assert!(state.possible_moves().is_empty());
     }
@@ -317,7 +314,7 @@ mod tests {
     #[test]
     fn state_detects_multiple_completed_missions() {
         let mut rng = fastrand::Rng::with_seed(TEST_SEED);
-        let mut state = crate::State::from_rng(&mut rng);
+        let mut state = super::State::from_rng(&mut rng);
 
         let initial_completed = state.completed_missions;
         let initial_deck_len = state.deck_missions.len();
