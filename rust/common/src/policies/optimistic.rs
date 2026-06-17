@@ -37,15 +37,18 @@ where
     S: ScoredState + Sync,
     S::Move: Sync,
 {
+    if depth == 0 {
+        return state.score();
+    }
     if parallel_depth == 0 {
-        return get_max_score(state, depth)
+        return get_max_score(state, depth);
     }
 
     let moves = state.possible_moves();
     moves.as_ref().par_iter()
         .map(|mv| {
             let new_state = state.apply(mv);
-            get_max_score(&new_state, depth - 1)
+            par_get_max_score(&new_state, depth - 1, parallel_depth - 1)
         })
         .max()
         .unwrap_or_else(|| state.score())
@@ -62,7 +65,7 @@ where
         #[cfg(feature = "parallel")]
         if self.parallel_depth > 0 {
             return moves.par_iter().max_by_key(|mv| {
-                par_get_max_score(&state.apply(mv), self.depth, self.parallel_depth - 1)
+                par_get_max_score(&state.apply(mv), self.depth + self.parallel_depth - 1, self.parallel_depth - 1)
             }).expect("choose_move expects to have at least one move");
         }
 
