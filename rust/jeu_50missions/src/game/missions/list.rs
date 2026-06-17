@@ -81,12 +81,12 @@ define_missions! {
         two_separate_yellow  => |t| fn_two_separate_cond(t, |c| c.color == CardColor::Yellow),
         two_separate_blue    => |t| fn_two_separate_cond(t, |c| c.color == CardColor::Blue  ),
         two_separate_green   => |t| fn_two_separate_cond(t, |c| c.color == CardColor::Green ),
-        two_separate_odds    => |t| fn_two_separate_cond(t, |c| c.value.get() % 2 == 1      ),
 
         two_barely_split_red     => |t| fn_two_barely_split_cond(t, |c| c.color == CardColor::Red   ),
         two_barely_split_yellow  => |t| fn_two_barely_split_cond(t, |c| c.color == CardColor::Yellow),
         two_barely_split_blue    => |t| fn_two_barely_split_cond(t, |c| c.color == CardColor::Blue  ),
         two_barely_split_green   => |t| fn_two_barely_split_cond(t, |c| c.color == CardColor::Green ),
+        two_barely_split_odds    => |t| fn_two_barely_split_cond(t, |c| c.value.get() % 2 == 1      ),
 
         all_distinct_values            => |t| fn_all_distinct_bits(t, |c| c.value.as_bitmask()),
         all_distinct_colors            => |t| fn_all_distinct_bits(t, |c| c.color.as_bitmask()),
@@ -100,10 +100,10 @@ define_missions! {
         sum_blue_equals_green   => |t| fn_col_sum(t, CardColor::Blue  ) == fn_col_sum(t, CardColor::Green),
         sum_blue_equals_red     => |t| fn_col_sum(t, CardColor::Blue  ) == fn_col_sum(t, CardColor::Red  ),
 
-        twice_sum_yellow_equals_green => |t| 2i8 * fn_col_sum(t, CardColor::Yellow) == fn_col_sum(t, CardColor::Green),
+        twice_sum_yellow_equals_green => |t| fn_col_sum(t, CardColor::Yellow) == 2i8 * fn_col_sum(t, CardColor::Green),
         twice_sum_yellow_equals_red   => |t| 2i8 * fn_col_sum(t, CardColor::Yellow) == fn_col_sum(t, CardColor::Red  ),
         twice_sum_blue_equals_green   => |t| 2i8 * fn_col_sum(t, CardColor::Blue  ) == fn_col_sum(t, CardColor::Green),
-        twice_sum_blue_equals_red     => |t| 2i8 * fn_col_sum(t, CardColor::Blue  ) == fn_col_sum(t, CardColor::Red  ),
+        twice_sum_blue_equals_red     => |t| fn_col_sum(t, CardColor::Blue  ) == 2i8 * fn_col_sum(t, CardColor::Red  ),
     }
 }
 

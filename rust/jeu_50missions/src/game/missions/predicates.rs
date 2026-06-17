@@ -7,7 +7,7 @@ where
     let matching_cond: [bool; N_TABLE_CARDS] = std::array::from_fn(|i| fx_cond(table_cards[i].card()));
     let two_adjacent = matching_cond.iter()
         .zip(matching_cond.iter().skip(1))
-        .all(|(&cond1, &cond2)| cond1 && cond2);
+        .any(|(&cond1, &cond2)| cond1 && cond2);
     let at_least_two = matching_cond.iter().filter(|&&cond| cond).count() >= 2;
     at_least_two && !two_adjacent
 }
@@ -19,7 +19,7 @@ where
     let matching_cond: [bool; N_TABLE_CARDS] = std::array::from_fn(|i| fx_cond(table_cards[i].card()));
     let two_are_barely_split = matching_cond.iter()
         .zip(matching_cond.iter().skip(2))
-        .all(|(&cond1, &cond2)| cond1 && cond2);
+        .any(|(&cond1, &cond2)| cond1 && cond2);
     let exactly_two = matching_cond.iter().filter(|&&cond| cond).count() == 2;
     exactly_two && two_are_barely_split
 }
