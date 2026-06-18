@@ -219,7 +219,7 @@ def initialiser_jeu():
 
         Mission(nom="2*Somme_Verte==Somme_Jaune", contrainte=meta_somme_couleurs_double("jaune", "vert")),
         Mission(nom="2*Somme_Jaune==Somme_Rouge", contrainte=meta_somme_couleurs_double("rouge", "jaune")),
-        Mission(nom="2*Somme_Bleue==Somme_Verte", contrainte=meta_somme_couleurs_double("vers", "bleu")),
+        Mission(nom="2*Somme_Bleue==Somme_Verte", contrainte=meta_somme_couleurs_double("vert", "bleu")),
         Mission(nom="2*Somme_Rouge==Somme_Bleue", contrainte=meta_somme_couleurs_double("bleu", "rouge")),
     ]
     random.shuffle(Pioche_missions)
