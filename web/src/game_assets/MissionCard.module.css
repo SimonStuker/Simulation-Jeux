@@ -1,0 +1,141 @@
+.wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+}
+
+.card {
+  background: #0e0e1a;
+  border: 1px solid #252535;
+  border-radius: 7px;
+  width: 108px;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  user-select: none;
+  cursor: default;
+  transition: border-color 0.15s;
+}
+
+.card:hover { border-color: #3a3a5a; }
+
+.body {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: 4px 6px;
+  flex-wrap: nowrap;
+  max-width: 100%;
+}
+
+/* ── Atoms ─────────────────────────────────── */
+
+.dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  display: inline-block;
+  flex-shrink: 0;
+  vertical-align: middle;
+}
+
+/* mini card stub — mirrors Card component at small scale */
+.stub {
+  background: #23211f;
+  border-top: 2.5px solid;
+  border-radius: 3px;
+  width: 18px;
+  height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.5rem;
+  font-weight: 800;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.faded {
+  opacity: 0.3;
+  border-top-color: #666 !important;
+  color: #666 !important;
+}
+
+.sigma {
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: #bbb;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.op {
+  font-size: 0.65rem;
+  color: #888;
+  line-height: 1;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.num {
+  font-size: 0.82rem;
+  font-weight: 800;
+  color: #dde;
+  line-height: 1;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* { ● ● } set brackets */
+.braces {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  border: 1px solid #333;
+  border-radius: 4px;
+  padding: 2px 4px;
+}
+
+/* two-line stacked layout */
+.twoLine {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+}
+
+.twoLineRow {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+/* 2×2 dot grid for all_distinct_colors */
+.dots4 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+  align-items: center;
+  justify-items: center;
+}
+
+/* mission key label (dev aid below card) */
+.label {
+  font-size: 0.58rem;
+  color: #444;
+  font-family: monospace;
+  text-align: center;
+  max-width: 108px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.unknown {
+  color: #444;
+  font-size: 1.1rem;
+}

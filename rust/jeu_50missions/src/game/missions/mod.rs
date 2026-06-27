@@ -23,12 +23,37 @@ impl Serialize for Mission {
     }
 }
 
+#[cfg(test)]
+static TEST_EASIEST: Mission = Mission { name: "easiest_mission",   constraint: |_| true  };
+#[cfg(test)]
+static TEST_IMPOSSIBLE: Mission = Mission { name: "impossible_mission", constraint: |_| false };
+
 #[derive(Copy, Clone)]
-pub struct MissionRef(pub &'static Mission);
+pub struct MissionRef(pub u8);
+
+impl MissionRef {
+    pub fn mission(self) -> &'static Mission {
+        #[cfg(test)]
+        match self.0 {
+            254 => return &TEST_EASIEST,
+            255 => return &TEST_IMPOSSIBLE,
+            _ => {}
+        }
+        &list::ALL_MISSIONS[self.0 as usize]
+    }
+
+    pub fn name(self) -> &'static str {
+        self.mission().name()
+    }
+
+    pub fn is_completed(self, cards: &TableCards) -> bool {
+        self.mission().is_completed(cards)
+    }
+}
 
 impl Serialize for MissionRef {
     fn serialize<S: Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
-        self.0.serialize(s)
+        self.mission().serialize(s)
     }
 }
 

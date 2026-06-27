@@ -1,12 +1,38 @@
-use std::path::PathBuf;
-
-use crate::{dumper::write_results, simulation::{SimulationResult, launch_batch}};
-
 mod game;
+
 mod simulation;
 mod dumper;
 
-/// expects sorted data
+use std::path::PathBuf;
+use clap::Parser;
+use indicatif::ProgressIterator;
+use crate::{dumper::write_results, simulation::{SimulationResult, launch_single}};
+
+#[derive(Parser)]
+#[command(name = "50missions", about = "50 Missions simulation runner")]
+struct Args {
+    #[arg(short, long, help = "Use random policy (default: optimistic)")]
+    random: bool,
+
+    #[arg(short = 'q', long, help = "Print each game state")]
+    verbose: bool,
+
+    #[arg(short, long, default_value_t = 1, help = "Number of games to run")]
+    batch_size: usize,
+
+    #[arg(short, long, help = "Starting seed (default: current time)")]
+    seed: Option<u64>,
+
+    #[arg(short, long, help = "Save results to file")]
+    output: Option<PathBuf>,
+
+    #[arg(long, default_value_t = 0, help = "Parallel lookahead depth")]
+    par_depth: usize,
+
+    #[arg(long, default_value_t = 1, help = "Sequential lookahead depth")]
+    seq_depth: usize,
+}
+
 fn get_quantile<T>(sorted_data: &[T], q: f64) -> &T {
     assert!(!sorted_data.is_empty());
     assert!((0.0..=1.0).contains(&q));
@@ -14,9 +40,20 @@ fn get_quantile<T>(sorted_data: &[T], q: f64) -> &T {
     &sorted_data[idx]
 }
 
+pub fn launch_batch(verbose: bool, random: bool, batch_size: usize, initial_seed: u64, par_depth: usize, seq_depth: usize) -> Vec<SimulationResult> {
+    let mut results: Vec<SimulationResult> = Vec::new();
+
+    for batch_idx in (0..batch_size).progress() {
+        let seed = initial_seed.wrapping_add(batch_idx as u64);
+        results.push(launch_single(verbose, random, seed, par_depth, seq_depth));
+    }
+
+    results
+}
+
 fn announce_results(results: &[SimulationResult], verbose: bool) {
     let quantiles = [0.0, 0.1, 0.5, 0.9, 0.99, 1.0];
-    let res_quantiles: Vec<&SimulationResult> = quantiles.iter().map(|&q| get_quantile(&results, q)).collect();
+    let res_quantiles: Vec<&SimulationResult> = quantiles.iter().map(|&q| get_quantile(results, q)).collect();
 
     for (batch_idx, sim_res) in results.iter().enumerate() {
         println!("=== Game {} : {} completed missions", batch_idx + 1, sim_res.final_state.completed_missions);
@@ -32,57 +69,43 @@ fn announce_results(results: &[SimulationResult], verbose: bool) {
     for (q, res) in quantiles.iter().zip(res_quantiles.iter()) {
         println!("Quantile {:.2} seed: {:10}: {} completed missions", q, res.seed, res.final_state.completed_missions);
     }
-
 }
 
 fn main() {
-    // Parse command line arguments
-    let verbose = std::env::args().any(|arg| arg == "-q" || arg == "--verbose");
-    let random = std::env::args().any(|arg| arg == "-r" || arg == "--random");
-    let batch_size = std::env::args().zip(std::env::args().skip(1))
-        .find(|(arg, _)| arg == "-b" || arg == "--batch-size")
-        .map(|(_, val)| val.parse::<usize>().expect("Batch size must be a positive integer"))
-        .unwrap_or(1);
-    let seed = std::env::args().zip(std::env::args().skip(1))
-        .find(|(arg, _)| arg == "-s" || arg == "--seed")
-        .map(|(_, val)| val.parse::<u64>().expect("Seed must be a positive integer"))
-        .unwrap_or_else(|| {
-            let now = std::time::SystemTime::now();
-            now.duration_since(std::time::UNIX_EPOCH).expect("Time went backwards").as_millis() as u64
-        });
-    let output: Option<PathBuf> = std::env::args().zip(std::env::args().skip(1))
-        .find(|(arg, _)| arg == "-o" || arg == "--output")
-        .map(|(_, val)| PathBuf::from(val));
-    let par_depth = std::env::args().zip(std::env::args().skip(1))
-        .find(|(arg, _)| arg == "--par-depth")
-        .map(|(_, val)| val.parse::<usize>().expect("Parallel depth must be a non-negative integer"))
-        .unwrap_or(0);
-    let seq_depth = std::env::args().zip(std::env::args().skip(1))
-        .find(|(arg, _)| arg == "--seq-depth")
-        .map(|(_, val)| val.parse::<usize>().expect("Sequential depth must be a non-negative integer"))
-        .unwrap_or(1);
-
-    if output.is_some() {
-        std::fs::create_dir_all(output.as_ref().unwrap().parent().unwrap())
-            .expect("Failed to create output directory");
+    if std::env::args().len() == 1 {
+        use clap::CommandFactory;
+        Args::command().print_help().unwrap();
+        println!();
+        return;
     }
 
-    let policy_name = if random {
+    let args = Args::parse();
+
+    let seed = args.seed.unwrap_or_else(|| {
+        std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .expect("Time went backwards")
+            .as_millis() as u64
+    });
+
+    let policy_name = if args.random {
         "RandomPolicy".to_string()
     } else {
-        let par_str = if par_depth > 0 { format!("parallel_depth={}, ", par_depth) } else { String::new() };
-        let seq_str = if seq_depth > 0 { format!("sequential_depth={}", seq_depth) } else { String::new() };
-        format!("OptimisticPolicy {{ {}{} }}", par_str, seq_str)
+        let par_str = if args.par_depth > 0 { format!("parallel_depth={}, ", args.par_depth) } else { String::new() };
+        format!("OptimisticPolicy {{ {}sequential_depth={} }}", par_str, args.seq_depth)
     };
 
-    println!("Launching [{}] batches with policy [{}]", batch_size, policy_name);
-    let mut results = launch_batch(verbose, random, batch_size, seed, par_depth, seq_depth);
+    println!("Launching [{}] batches with policy [{}]", args.batch_size, policy_name);
+    let mut results = launch_batch(args.verbose, args.random, args.batch_size, seed, args.par_depth, args.seq_depth);
     results.sort_unstable_by_key(|res| res.final_state.completed_missions);
 
-    if let Some(output) = output {
+    if let Some(output) = args.output {
+        if let Some(parent) = output.parent() {
+            std::fs::create_dir_all(parent).expect("Failed to create output directory");
+        }
         write_results(&results, &output).expect("Failed to write results to file");
         println!("Simulation completed, results saved to {}", output.display());
     } else {
-        announce_results(&results, verbose);
+        announce_results(&results, args.verbose);
     }
 }

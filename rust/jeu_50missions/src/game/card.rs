@@ -93,11 +93,17 @@ pub struct Card {
 }
 
 #[derive(Copy, Clone)]
-pub struct CardRef(pub &'static Card);
+pub struct CardRef(pub u8);
+
+impl CardRef {
+    pub fn card(self) -> &'static Card {
+        &ALL_CARDS[self.0 as usize]
+    }
+}
 
 impl Serialize for CardRef {
     fn serialize<S: Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
-        self.0.serialize(s)
+        self.card().serialize(s)
     }
 }
 

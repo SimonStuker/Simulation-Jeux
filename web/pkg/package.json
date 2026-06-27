@@ -1,0 +1,15 @@
+{
+  "name": "jeu_50missions",
+  "type": "module",
+  "version": "0.1.0",
+  "files": [
+    "jeu_50missions_bg.wasm",
+    "jeu_50missions.js",
+    "jeu_50missions.d.ts"
+  ],
+  "main": "jeu_50missions.js",
+  "types": "jeu_50missions.d.ts",
+  "sideEffects": [
+    "./snippets/*"
+  ]
+}
