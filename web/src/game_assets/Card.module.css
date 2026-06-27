@@ -1,0 +1,45 @@
+.card {
+  /* background: #23211f; */
+  background: #262421;
+  border-top: 4px solid var(--c);
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+  flex-shrink: 0;
+  user-select: none;
+}
+
+/* Size variants */
+.sm  { width: 44px;  height: 62px;  border-radius: 6px;  border-top-width: 3px; }
+.md  { width: 62px;  height: 87px;  border-radius: 8px; }
+.lg  { width: 88px;  height: 122px; border-radius: 10px; border-top-width: 5px; }
+
+/* Corner pips */
+.corner {
+  position: absolute;
+  font-weight: 900;
+  color: var(--c);
+  line-height: 1;
+}
+
+.sm  .corner { font-size: 0.55rem; }
+.md  .corner { font-size: 0.7rem;  }
+.lg  .corner { font-size: 0.95rem; }
+
+.topLeft     { top: 0.4em;    left: 0.45em; }
+.bottomRight { bottom: 0.4em; right: 0.45em; transform: rotate(180deg); }
+
+/* Center value */
+.center {
+  color: var(--c);
+  font-weight: 900;
+  line-height: 1;
+}
+
+.sm  .center { font-size: 1.4rem; }
+.md  .center { font-size: 2rem;   }
+.lg  .center { font-size: 2.75rem; }

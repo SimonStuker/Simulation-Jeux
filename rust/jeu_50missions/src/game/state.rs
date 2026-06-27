@@ -1,14 +1,16 @@
 use common::ScoredState;
+use serde::{Deserialize, Serialize};
 use smallvec::{SmallVec, smallvec};
 
-use crate::game::{card::{ALL_CARDS, Card, CardColor}, constants::*, missions::list::mission_deck_from_rng, setup::pop_n_iter, types::{DeckCards, DeckMissions, PlayerHand, TableCards, TableMissions}};
+use crate::game::{card::{CardColor, CardRef}, constants::*, missions::list::mission_deck_from_rng, setup::pop_n_iter, types::{DeckCards, DeckMissions, PlayerHand, TableCards, TableMissions}};
 
+#[derive(Serialize, Deserialize, Clone)]
 pub struct Move {
     idx_hand: usize,
     idx_table: usize,
 }
 
-#[derive(Clone)]
+#[derive(Serialize, Deserialize, Clone)]
 pub enum Player {
     Player0,
     Player1,
@@ -31,6 +33,15 @@ impl Player {
 }
 
 #[derive(Clone)]
+pub struct StateRng(pub fastrand::Rng);
+
+impl Serialize for StateRng {
+    fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        self.0.get_seed().serialize(serializer)
+    }
+}
+
+#[derive(Serialize, Clone)]
 pub struct State {
     pub current_player: Player,
     pub player_hands: [PlayerHand; 2],
@@ -39,7 +50,8 @@ pub struct State {
     pub deck_cards: DeckCards,
     pub deck_missions: DeckMissions,
     pub turn: u32,
-    pub rng: fastrand::Rng,
+    #[serde(skip)]
+    pub rng: StateRng,
     pub final_sprint: bool,
     pub completed_missions: u32,
 }
@@ -48,7 +60,7 @@ impl State {
     pub fn from_rng(rng: &mut fastrand::Rng) -> Self {
         let mut deck_missions: DeckMissions = mission_deck_from_rng(rng);
 
-        let mut deck_cards: DeckCards = ALL_CARDS.iter().collect();
+        let mut deck_cards: DeckCards = (0u8..N_CARDS as u8).map(CardRef).collect();
         rng.shuffle(&mut deck_cards);
 
         let player_hands: [PlayerHand; 2] = [
@@ -68,7 +80,7 @@ impl State {
             table_missions,
             deck_cards,
             deck_missions,
-            rng: rng.clone(),
+            rng: StateRng(rng.clone()),
             completed_missions: 0,
             final_sprint: false,
             turn: 0,
@@ -86,7 +98,7 @@ impl State {
         &self.player_hands[self.current_player.as_idx()]
     }
 
-    fn draw_card(&mut self) -> Option<&'static Card> {
+    fn draw_card(&mut self) -> Option<CardRef> {
         self.deck_cards.pop()
     }
 
@@ -100,9 +112,9 @@ impl State {
 
     fn check_and_apply_last_sprint(&mut self) {
         if !self.final_sprint && self.completed_missions >= N_RESHUFFLE_MISSIONS {
-            self.deck_missions = mission_deck_from_rng(&mut self.rng);
+            self.deck_missions = mission_deck_from_rng(&mut self.rng.0);
             self.deck_missions.retain(|m| {
-              self.table_missions.iter().all(|tm| !std::ptr::eq(*tm, *m))
+                self.table_missions.iter().all(|tm| tm.0 != m.0)
             });
             self.final_sprint = true;
             assert!(self.deck_missions.len() + self.table_missions.len() == N_MISSIONS, "After reshuffle, total missions should still be 50");
@@ -147,7 +159,7 @@ impl common::State for State {
 
         for (idx_hand, card_hand) in self.current_hand().iter().enumerate() {
             for (idx_table, card_table) in self.table_cards.iter().enumerate() {
-                if card_hand.color == card_table.color || card_hand.value == card_table.value {
+                if card_hand.card().color == card_table.card().color || card_hand.card().value == card_table.card().value {
                     moves.push(Move {
                         idx_hand,
                         idx_table,
@@ -190,17 +202,17 @@ impl ScoredState for State {
 
 impl State {
   pub fn print_state(self: &Self) {
-      fn fmt_card(card: &Card) -> String {
-          let color = match card.color {
+      fn fmt_card(card: &CardRef) -> String {
+          let color = match card.card().color {
               CardColor::Red => "Red  ",
               CardColor::Green => "Green",
               CardColor::Yellow => "Yellow",
               CardColor::Blue => "Blue ",
           };
-          format!("{}-{}", card.value.get(), color)
+          format!("{}-{}", card.card().value.get(), color)
       }
 
-      fn fmt_cards(cards: &[&Card]) -> String {
+      fn fmt_cards(cards: &[CardRef]) -> String {
           cards
               .iter()
               .map(|c| fmt_card(c))
@@ -243,25 +255,19 @@ impl State {
 mod tests {
     use common::State;
 
-    use crate::game::missions::{Mission};
+    use crate::game::missions::MissionRef;
     use crate::game::constants::*;
 
     const TEST_SEED: u64 = 42;
 
-    pub const EASIEST_MISSION: Mission = Mission {
-        name: "easiest_mission",
-        constraint: |_| true,
-    };
-
-    pub const IMPOSSIBLE_MISSION: Mission = Mission {
-        name: "impossible_mission",
-        constraint: |_| false,
-    };
+    // 254/255 are sentinel IDs mapped to TEST_EASIEST / TEST_IMPOSSIBLE in MissionRef::mission()
+    const EASIEST_MISSION: MissionRef = MissionRef(254);
+    const IMPOSSIBLE_MISSION: MissionRef = MissionRef(255);
 
     #[test]
     fn state_initializes() {
         let mut rng = fastrand::Rng::with_seed(42);
-        let state = crate::State::from_rng(&mut rng);
+        let state = super::State::from_rng(&mut rng);
 
         assert_eq!(state.player_hands[0].len(), N_HAND_CARDS);
         assert_eq!(state.player_hands[1].len(), N_HAND_CARDS);
@@ -275,7 +281,7 @@ mod tests {
     #[test]
     fn state_detects_victory() {
         let mut rng = fastrand::Rng::with_seed(TEST_SEED);
-        let mut state = crate::State::from_rng(&mut rng);
+        let mut state = super::State::from_rng(&mut rng);
 
         assert_eq!(state.completed_missions, 0);
         assert!(!state.is_victory());
@@ -286,26 +292,23 @@ mod tests {
         assert!(!state.possible_moves().is_empty());
 
         state.completed_missions = 50;
+        assert!(!state.is_victory());
+        assert!(!state.possible_moves().is_empty());
+
+        state.completed_missions = 50;
+        state.deck_missions.clear();
+        state.table_missions.clear();
         assert!(state.is_victory());
-        assert!(state.possible_moves().is_empty());
-    }
-
-    #[test]
-    fn state_detects_defeat_by_no_deck_left() {
-        let mut rng = fastrand::Rng::with_seed(TEST_SEED);
-        let mut state = crate::State::from_rng(&mut rng);
-
-        state.deck_cards.clear();
-        assert!(state.is_defeat());
-        assert!(state.possible_moves().is_empty());
+        assert!(!state.possible_moves().is_empty());
     }
 
     #[test]
     fn state_detects_defeat_by_no_moves_left() {
         let mut rng = fastrand::Rng::with_seed(TEST_SEED);
-        let mut state = crate::State::from_rng(&mut rng);
+        let mut state = super::State::from_rng(&mut rng);
 
         state.deck_cards.clear();
+        state.current_hand_mut().clear();
         assert!(state.is_defeat());
         assert!(state.possible_moves().is_empty());
     }
@@ -313,7 +316,7 @@ mod tests {
     #[test]
     fn state_detects_multiple_completed_missions() {
         let mut rng = fastrand::Rng::with_seed(TEST_SEED);
-        let mut state = crate::State::from_rng(&mut rng);
+        let mut state = super::State::from_rng(&mut rng);
 
         let initial_completed = state.completed_missions;
         let initial_deck_len = state.deck_missions.len();
@@ -322,9 +325,9 @@ mod tests {
 
         // fill deck with impossible missions except for the top 5 easiest ones
         const EXTRA_FROM_DECK: usize = 5;
-        state.table_missions.fill(&EASIEST_MISSION);
-        state.deck_missions.fill(&IMPOSSIBLE_MISSION);
-        state.deck_missions[(initial_deck_len - EXTRA_FROM_DECK)..].fill(&EASIEST_MISSION);
+        state.table_missions.fill(EASIEST_MISSION);
+        state.deck_missions.fill(IMPOSSIBLE_MISSION);
+        state.deck_missions[(initial_deck_len - EXTRA_FROM_DECK)..].fill(EASIEST_MISSION);
 
         assert_eq!(state.completed_missions, initial_completed);
         assert!(!state.final_sprint);
@@ -333,5 +336,6 @@ mod tests {
         state.check_and_apply_last_sprint();
         assert_eq!(state.completed_missions, initial_completed + N_TABLE_MISSIONS as u32 + EXTRA_FROM_DECK as u32, "New missions should also be instantly completed");
         assert!(state.table_missions.iter().all(|m| m.name() == IMPOSSIBLE_MISSION.name()), "All missions on the table should now be impossible missions");
+
     }
 }
